@@ -1,0 +1,5 @@
+            姓名          电话号码           电子邮件地址
+           张三       13812345678                    
+           李四       13987654321          lisi@example.com
+           王五       18700001111          wangwu@test.com
+          赵小六       15588889999          zhaoliu@mail.com

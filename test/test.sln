@@ -1,0 +1,41 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.14.36717.8
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "查找符合条件的子集", "查找符合条件的子集\查找符合条件的子集.vcxproj", "{93BF482A-8DA5-4069-B06C-C96FC6667996}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "货物", "货物\货物.vcxproj", "{8DCC7FE5-9737-4948-A359-FCCB2B370EBB}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
+		Debug|x86 = Debug|x86
+		Release|x64 = Release|x64
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{93BF482A-8DA5-4069-B06C-C96FC6667996}.Debug|x64.ActiveCfg = Debug|x64
+		{93BF482A-8DA5-4069-B06C-C96FC6667996}.Debug|x64.Build.0 = Debug|x64
+		{93BF482A-8DA5-4069-B06C-C96FC6667996}.Debug|x86.ActiveCfg = Debug|Win32
+		{93BF482A-8DA5-4069-B06C-C96FC6667996}.Debug|x86.Build.0 = Debug|Win32
+		{93BF482A-8DA5-4069-B06C-C96FC6667996}.Release|x64.ActiveCfg = Release|x64
+		{93BF482A-8DA5-4069-B06C-C96FC6667996}.Release|x64.Build.0 = Release|x64
+		{93BF482A-8DA5-4069-B06C-C96FC6667996}.Release|x86.ActiveCfg = Release|Win32
+		{93BF482A-8DA5-4069-B06C-C96FC6667996}.Release|x86.Build.0 = Release|Win32
+		{8DCC7FE5-9737-4948-A359-FCCB2B370EBB}.Debug|x64.ActiveCfg = Debug|x64
+		{8DCC7FE5-9737-4948-A359-FCCB2B370EBB}.Debug|x64.Build.0 = Debug|x64
+		{8DCC7FE5-9737-4948-A359-FCCB2B370EBB}.Debug|x86.ActiveCfg = Debug|Win32
+		{8DCC7FE5-9737-4948-A359-FCCB2B370EBB}.Debug|x86.Build.0 = Debug|Win32
+		{8DCC7FE5-9737-4948-A359-FCCB2B370EBB}.Release|x64.ActiveCfg = Release|x64
+		{8DCC7FE5-9737-4948-A359-FCCB2B370EBB}.Release|x64.Build.0 = Release|x64
+		{8DCC7FE5-9737-4948-A359-FCCB2B370EBB}.Release|x86.ActiveCfg = Release|Win32
+		{8DCC7FE5-9737-4948-A359-FCCB2B370EBB}.Release|x86.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {69AF2728-E398-4E7B-8CC7-1A935EBAF785}
+	EndGlobalSection
+EndGlobal
