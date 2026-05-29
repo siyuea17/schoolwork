@@ -3,18 +3,9 @@
 * All rights reserved.
 *
 * Filename: $safeitemname$
-* Description:
+* Description: 
 *
 * Version: 1.0
 * Author: ÍõÐÂ½®
 * Date: $time$
 */
-
-#include <iostream>
-
-using namespace std;
-
-int main() {
-
-    return 0;
-}
