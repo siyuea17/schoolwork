@@ -13,6 +13,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "1911地图分析", "1911地
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MyString", "Mystring\Mystring.vcxproj", "{A819D434-53FB-4E14-8F79-50F25A5680D9}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "连连看", "连连看\连连看.vcxproj", "{B2446846-BDD0-4B26-A3BC-ED36022850E4}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -61,6 +63,14 @@ Global
 		{A819D434-53FB-4E14-8F79-50F25A5680D9}.Release|x64.Build.0 = Release|x64
 		{A819D434-53FB-4E14-8F79-50F25A5680D9}.Release|x86.ActiveCfg = Release|Win32
 		{A819D434-53FB-4E14-8F79-50F25A5680D9}.Release|x86.Build.0 = Release|Win32
+		{B2446846-BDD0-4B26-A3BC-ED36022850E4}.Debug|x64.ActiveCfg = Debug|x64
+		{B2446846-BDD0-4B26-A3BC-ED36022850E4}.Debug|x64.Build.0 = Debug|x64
+		{B2446846-BDD0-4B26-A3BC-ED36022850E4}.Debug|x86.ActiveCfg = Debug|x64
+		{B2446846-BDD0-4B26-A3BC-ED36022850E4}.Debug|x86.Build.0 = Debug|x64
+		{B2446846-BDD0-4B26-A3BC-ED36022850E4}.Release|x64.ActiveCfg = Release|x64
+		{B2446846-BDD0-4B26-A3BC-ED36022850E4}.Release|x64.Build.0 = Release|x64
+		{B2446846-BDD0-4B26-A3BC-ED36022850E4}.Release|x86.ActiveCfg = Release|x64
+		{B2446846-BDD0-4B26-A3BC-ED36022850E4}.Release|x86.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

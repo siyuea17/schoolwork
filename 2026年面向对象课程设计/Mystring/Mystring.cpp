@@ -1,3 +1,5 @@
+
+
 #include "MyString.h"
 
 #include <iostream>
@@ -66,7 +68,7 @@ ostream& operator<<(ostream& os, MyString& ms)
 istream& operator>>(istream& is, MyString& ms)
 {
 	char ch;
-	while(is.get(ch) && isspace(static_cast<unsigned char>(ch))){}
+	while (is.get(ch) && isspace(static_cast<unsigned char>(ch))) {}
 	if (!is) return is;
 
 	int cap = 64;
@@ -108,97 +110,160 @@ MyString& MyString::operator=(const char* ch)
 		int newLen = strlen(ch);
 		char* newStr = new char[newLen + 1];
 		strcpy(newStr, ch);
-
-
+		len = newLen;
+		str = newStr;
+		return *this;
 	}
 }
 
 MyString& MyString::operator=(MyString& ms)
 {
-	// TODO: 在此处插入 return 语句
+	if (this == &ms) {
+		return *this;
+	}
+	else {
+		char* newStr = new char[ms.len + 1];
+		strcpy(newStr, ms.str);
+		delete[] str;
+		strcpy(str, newStr);
+		len = ms.len;
+		return *this;
+	}
 }
 
 MyString MyString::operator+(MyString& ms)
 {
-	return MyString();
+	int newLen = len + ms.len;
+	char* newStr = new char[newLen + 1];
+	strcpy(newStr, str);
+	strcat(newStr, ms.str);
+	delete[] newStr;
+	MyString res(newStr);
+	return res;
 }
 
 
-
+//==========================重载比较运算符=================================
 bool MyString::operator>(const MyString& ms)
 {
-	return false;
+	return strcmp(str, ms.str) > 0;
 }
 
 bool MyString::operator<(const MyString& ms)
 {
-	return false;
+	return strcmp(str, ms.str) < 0;
 }
 
 bool MyString::operator==(const MyString& ms)
 {
-	return false;
+	return strcmp(str, ms.str) == 0;
 }
 
 bool MyString::operator!=(const MyString& ms)
 {
-	return false;
+	return strcmp(str, ms.str) != 0;
 }
 
-//=====================================
-long MyString::GetLength()
+//========================================================================
+long MyString::GetLength() const
 {
-	return 0;
+	return static_cast<long>(len);
 }
 
 MyString MyString::substr(int pos, int n)
 {
-	return MyString();
+	if (pos < 0 || pos >= len || n == 0) return MyString();
+	int actualN = (pos + n > len) ? (len - pos) : pos + n;
+	char* buf = new char[actualN + 1];
+	strncpy(buf, str + pos, actualN);
+	buf[actualN] = '\0';
+	MyString res(buf);
+	delete[] buf;
+	return res;
 }
 
 MyString MyString::substr(int pos)
 {
-	return MyString();
+	return this->substr(pos, len);
 }
 
 MyString MyString::replace(const MyString& ms1, const MyString& ms2)
 {
+
 	return MyString();
 }
 
 int MyString::find(const MyString& ms)
 {
-	return 0;
+	if (len == 0) return 0;
+	char* found = strstr(str, ms.str);
+	if (found == nullptr) return -1;
+	return found - str;
 }
 
 bool MyString::equalsIgnoreCase(const MyString& ms)
 {
-	return false;
+	if (len != ms.len) return false;
+	for (int i = 0; i < len; ++i)
+	{
+		if (tolower(static_cast<unsigned char>(str[i])) !=
+			tolower(static_cast<unsigned char>(ms.str[i])))
+			return false;
+	}
+	return true;
 }
 
 bool MyString::contains(const MyString& ms)
 {
-	return false;
+	return find(ms) != -1;
 }
 
 bool MyString::startsWith(const MyString& ms)
 {
-	return false;
+	if (len < ms.len) return false;
+	return strncmp(str, ms.str, ms.len) == 0;
 }
 
 bool MyString::endsWith(const MyString& ms)
 {
-	return false;
+	if (len < ms.len) return false;
+	return strcmp(str + len - ms.len, ms.str) == 0;
 }
 
 bool MyString::Load(const char* fileName)
 {
-	return false;
+	try {
+		std::ifstream fin(fileName);
+		fin.seekg(0, std::ios::end);
+		long fileSize = static_cast<long>(fin.tellg());
+		fin.seekg(0, std::ios::beg);
+
+		char* buf = new char[fileSize + 1];
+		fin.read(buf, fileSize);
+		buf[fin.gcount()] = '\0';
+		fin.close();
+		*this = buf;
+		delete[] buf;
+
+		return true;
+	}
+	catch(const std::exception& e) {
+		std::cerr << "Error loading file: " << e.what() << std::endl;
+		return false;
+	}
 }
 
 bool MyString::Save(const char* fileName)
 {
-	return false;
+	try {
+		std::ofstream fout(fileName);
+		fout << str;
+		return true;
+	}
+	catch(const std::exception& e) {
+		std::cerr << "Error saving file: " << e.what() << std::endl;
+		return false;
+	}
 }
 
 

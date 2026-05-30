@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<UI version="4.0" >
+ <class>MainWindowClass</class>
+ <widget class="QMainWindow" name="MainWindowClass" >
+  <property name="objectName" >
+   <string notr="true">MainWindowClass</string>
+  </property>
+  <property name="geometry" >
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>880</width>
+    <height>700</height>
+   </rect>
+  </property>
+  <property name="windowTitle" >
+   <string>Link Game</string>
+  </property>
+  <widget class="QMenuBar" name="menuBar" />
+  <widget class="QToolBar" name="mainToolBar" >
+   <property name="windowTitle" >
+    <string>Toolbar</string>
+   </property>
+   <attribute name="toolBarArea" >
+    <enum>TopToolBarArea</enum>
+   </attribute>
+   <attribute name="toolBarBreak" >
+    <bool>false</bool>
+   </attribute>
+   <addaction name="newGameAction" />
+   <addaction name="separator" />
+   <addaction name="hintAction" />
+   <addaction name="shuffleAction" />
+  </widget>
+  <widget class="QWidget" name="centralWidget" />
+  <widget class="QStatusBar" name="statusBar" />
+  <action name="newGameAction" >
+   <property name="text" >
+    <string>New Game</string>
+   </property>
+   <property name="toolTip" >
+    <string>Start a new game</string>
+   </property>
+  </action>
+  <action name="hintAction" >
+   <property name="text" >
+    <string>Hint</string>
+   </property>
+   <property name="toolTip" >
+    <string>Highlight a matchable pair</string>
+   </property>
+  </action>
+  <action name="shuffleAction" >
+   <property name="text" >
+    <string>Shuffle</string>
+   </property>
+   <property name="toolTip" >
+    <string>Rearrange remaining tiles</string>
+   </property>
+  </action>
+ </widget>
+ <layoutDefault spacing="6" margin="11" />
+ <pixmapfunction></pixmapfunction>
+ <resources>
+   <include location="resources.qrc"/>
+ </resources>
+ <connections/>
+</UI>

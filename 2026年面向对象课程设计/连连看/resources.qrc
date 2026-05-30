@@ -1,0 +1,24 @@
+<RCC>
+    <qresource prefix="tiles">
+        <file>images/tile_01.png</file>
+        <file>images/tile_02.png</file>
+        <file>images/tile_03.png</file>
+        <file>images/tile_04.png</file>
+        <file>images/tile_05.png</file>
+        <file>images/tile_06.png</file>
+        <file>images/tile_07.png</file>
+        <file>images/tile_08.png</file>
+        <file>images/tile_09.png</file>
+        <file>images/tile_10.png</file>
+        <file>images/tile_11.png</file>
+        <file>images/tile_12.png</file>
+        <file>images/tile_13.png</file>
+        <file>images/tile_14.png</file>
+        <file>images/tile_15.png</file>
+        <file>images/tile_16.png</file>
+        <file>images/tile_17.png</file>
+        <file>images/tile_18.png</file>
+        <file>images/tile_19.png</file>
+        <file>images/tile_20.png</file>
+    </qresource>
+</RCC>

@@ -45,7 +45,7 @@ public:
 	MyString  operator + (MyString& ms);
 
 	//返回字符串内容的长度（以字节为单位）
-	long GetLength();
+	long GetLength() const;
 	//重载>，字符串比较操作
 	bool operator > (const MyString& ms);
 
