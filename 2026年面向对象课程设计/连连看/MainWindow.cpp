@@ -23,8 +23,6 @@ MainWindow::MainWindow(QWidget* parent)
             this, &MainWindow::onNewGame);
     connect(ui.hintAction, &QAction::triggered,
             this, &MainWindow::onHint);
-    connect(ui.shuffleAction, &QAction::triggered,
-            this, &MainWindow::onShuffle);
 
     QStatusBar* sb = ui.statusBar;
 
@@ -86,11 +84,6 @@ void MainWindow::onHint()
     m_gameWidget->showHint();
 }
 
-void MainWindow::onShuffle()
-{
-    m_gameWidget->shuffleBoard();
-}
-
 void MainWindow::onTimerTick()
 {
     m_elapsedSeconds++;
@@ -127,7 +120,5 @@ void MainWindow::onGameWon()
 
 void MainWindow::onNoMovesLeft()
 {
-    QMessageBox::information(this,
-        QString::fromUtf8("无可用移动"),
-        QString::fromUtf8("当前没有可以消除的方块对。\n请点击【重排】按钮重新排列方块。"));
+    ui.statusBar->showMessage(QString::fromUtf8("无可用移动，正在自动重排..."), 2000);
 }

@@ -34,6 +34,15 @@ GameWidget::GameWidget(QWidget* parent)
             clearHintTimer();
         update();
     });
+
+    // 空闲自动提示计时器
+    m_idleTimer = new QTimer(this);
+    m_idleTimer->setInterval(IDLE_HINT_DELAY);
+    m_idleTimer->setSingleShot(true);
+    connect(m_idleTimer, &QTimer::timeout, this, [this]() {
+        if (!m_isAnimating && !m_board.isWin() && !m_showingHint)
+            showHint();
+    });
 }
 
 GameWidget::~GameWidget()
@@ -74,6 +83,7 @@ void GameWidget::startNewGame()
     emit tilesRemainingChanged(GameBoard::TOTAL_TILES);
     emit moveCountChanged(0);
 
+    m_idleTimer->start();
     computeLayout();
     update();
 }
@@ -94,6 +104,8 @@ void GameWidget::showHint()
     PathInfo hint = m_board.findHint();
     if (!hint.valid)
     {
+        // 无可用配对，自动重排
+        shuffleBoard();
         emit noMovesLeft();
         return;
     }
@@ -105,11 +117,12 @@ void GameWidget::showHint()
     m_showingHint = true;
     m_hintFlashCount = 0;
     m_hintTimer->start();
+    m_idleTimer->stop();  // 提示已显示，停止空闲计时
     update();
 }
 
 // ============================================================================
-// 重排方块
+// 重排方块（仅内部调用：当无可用移动时自动重排）
 // ============================================================================
 void GameWidget::shuffleBoard()
 {
@@ -121,6 +134,9 @@ void GameWidget::shuffleBoard()
     m_selectedCol = -1;
 
     m_board.shuffle();
+
+    // 重排后重新开始空闲计时
+    m_idleTimer->start();
     update();
 }
 
@@ -136,6 +152,9 @@ void GameWidget::clearHintTimer()
     m_hintRow2 = -1;
     m_hintCol2 = -1;
     m_hintFlashCount = 0;
+    // 提示清除后重新开始空闲计时（如果游戏仍在进行）
+    if (!m_board.isWin() && !m_isAnimating)
+        m_idleTimer->start();
 }
 
 // ============================================================================
@@ -373,6 +392,9 @@ void GameWidget::mousePressEvent(QMouseEvent* event)
 
     clearHintTimer();
 
+    // 玩家有操作，重置空闲计时器
+    m_idleTimer->start();
+
     if (!m_hasSelection)
     {
         m_hasSelection = true;
@@ -431,6 +453,9 @@ void GameWidget::executeMatch(const PathInfo& path)
     m_selectedRow = -1;
     m_selectedCol = -1;
 
+    // 匹配成功，停止空闲计时（finishMatch 后会重新启动）
+    m_idleTimer->stop();
+
     update();
     QTimer::singleShot(500, this, &GameWidget::finishMatch);
 }
@@ -468,16 +493,25 @@ void GameWidget::checkGameState()
 {
     if (m_board.isWin())
     {
+        m_idleTimer->stop();
         emit gameWon();
         return;
     }
 
     if (!m_board.hasValidMoves())
     {
-        QTimer::singleShot(300, this, [this]() {
-            emit noMovesLeft();
-        });
+        // 自动重排，循环直到有可用的移动（通常一次就够）
+        int maxAttempts = 10;
+        while (!m_board.hasValidMoves() && maxAttempts-- > 0)
+        {
+            m_board.shuffle();
+        }
+        update();
+        emit noMovesLeft();  // 通知状态栏显示"已自动重排"
     }
+
+    // 匹配完成后重新开始空闲计时
+    m_idleTimer->start();
 }
 
 // ============================================================================

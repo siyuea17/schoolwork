@@ -30,7 +30,6 @@
    <addaction name="newGameAction" />
    <addaction name="separator" />
    <addaction name="hintAction" />
-   <addaction name="shuffleAction" />
   </widget>
   <widget class="QWidget" name="centralWidget" />
   <widget class="QStatusBar" name="statusBar" />
@@ -48,14 +47,6 @@
    </property>
    <property name="toolTip" >
     <string>Highlight a matchable pair</string>
-   </property>
-  </action>
-  <action name="shuffleAction" >
-   <property name="text" >
-    <string>Shuffle</string>
-   </property>
-   <property name="toolTip" >
-    <string>Rearrange remaining tiles</string>
    </property>
   </action>
  </widget>

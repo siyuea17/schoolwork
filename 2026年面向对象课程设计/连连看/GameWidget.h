@@ -20,7 +20,6 @@ public:
     // 游戏操作
     void startNewGame();
     void showHint();
-    void shuffleBoard();
 
     // 状态获取
     int getScore() const { return m_board.getScore(); }
@@ -59,6 +58,7 @@ private:
     void executeMatch(const PathInfo& path);
     void finishMatch();
     void checkGameState();
+    void shuffleBoard();                         // 自动重排（私有）
 
     // 加载资源
     void loadTileImages();
@@ -94,4 +94,8 @@ private:
     int m_hintRow2, m_hintCol2;
     QTimer* m_hintTimer;
     int m_hintFlashCount;
+
+    // 自动提示计时器
+    QTimer* m_idleTimer;
+    static constexpr int IDLE_HINT_DELAY = 10000;  // 10秒无操作自动提示
 };

@@ -18,7 +18,6 @@ public:
 private slots:
     void onNewGame();
     void onHint();
-    void onShuffle();
     void onTimerTick();
     void onGameWon();
     void onNoMovesLeft();
