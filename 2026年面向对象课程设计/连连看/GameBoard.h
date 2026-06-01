@@ -1,75 +1,183 @@
 #pragma once
+// ============================================================================
+// 文件：GameBoard.h
+// 角色：连连看游戏的"大脑"——负责所有棋盘逻辑和路径查找算法
+//
+// 这个类不涉及任何界面绘制（Qt 信号槽都用不到），是一个"纯 C++ 类"。
+// 为什么要分开？这就是面向对象的核心思想——"各司其职"：
+//   - GameBoard 只管数据（棋盘上有什么）和算法（怎么连）
+//   - GameWidget 只管显示（画出来）和交互（鼠标点击）
+//   - MainWindow 只管窗口框架（菜单、状态栏、计时）
+// 这样修改算法时不用动界面代码，改界面时不用碰算法，互不干扰。
+// ============================================================================
 
-#include <QVector>
-#include <QPoint>
-#include <random>
-#include <algorithm>
+#include <QVector>   // Qt 的动态数组（类似 std::vector，但 Qt 更常用）
+#include <QPoint>    // Qt 的点坐标 (x=列, y=行)
+#include <random>    // C++ 标准库的随机数
+#include <algorithm> // C++ 标准库的算法（如 shuffle 打乱）
 
-// 路径信息结构体：存储连接路径的拐点
+// ============================================================================
+// PathInfo —— 路径信息结构体
+//
+// 什么是结构体（struct）？
+//   它是一种"轻量级的类"，用来把多个相关数据打包在一起。
+//   和 class 的区别只是：struct 默认所有成员都是 public（公开的）。
+//
+// 这个结构体的作用是：描述两个方块之间的"连接路径"。
+// 连连看的规则是：找到两个相同图案的方块，用不超过两次转弯的路径连起来。
+// PathInfo 就记录了这条路径经过的所有"拐弯点"。
+//
+// 举例说明（假设棋盘坐标，x=列号，y=行号）：
+//   0折（直连）：[(3,2), (3,7)]  → 同行，2个点，起点+终点
+//   1折（L形）：[(3,2), (3,5), (7,5)]  → 3个点，中间那个是拐角
+//   2折（Z/U形）：[(3,2), (3,1), (7,1), (7,5)]  → 4个点，中间两个是拐角
+// ============================================================================
 struct PathInfo
 {
-    bool valid = false;                  // 是否找到有效路径
-    QVector<QPoint> corners;             // 路径拐点（包含起点和终点）
-    // 0 折: 2个点 [起点, 终点]
-    // 1 折: 3个点 [起点, 拐角, 终点]
-    // 2 折: 4个点 [起点, 拐角1, 拐角2, 终点]
+    bool valid = false;            // 是否找到有效路径？
+                                   //   true  = 找到了！可以消除
+                                   //   false = 连不起来，不能消除
+
+    QVector<QPoint> corners;       // 路径上的所有拐点（包含起点和终点）
+                                   // QPoint 存储 (x, y)，这里约定：
+                                   //   x = 列号（col），y = 行号（row）
+                                   //
+                                   // 根据转弯次数不同，corners 的长度也不同：
+                                   //   0 折（直接连）: 2个点 [起点, 终点]
+                                   //   1 折（拐一次弯）: 3个点 [起点, 拐角, 终点]
+                                   //   2 折（拐两次弯）: 4个点 [起点, 拐角1, 拐角2, 终点]
 };
 
-// 游戏棋盘逻辑类（纯C++，无Q_OBJECT）
+// ============================================================================
+// GameBoard —— 游戏棋盘逻辑类
+//
+// 这个类管理一个"带边界的棋盘"。
+// 为什么需要边界？因为连连看允许通过棋盘外部的空白区域连接！
+// 比如两个方块在棋盘边缘，可以通过棋盘外面绕过去。
+//
+// 棋盘布局示意（ROWS=8, COLS=10，加上边界变成 10×12）：
+//
+//     列:  0   1   2   ...  10  11
+//   行0:  [空][空][空] ... [空][空]   ← 上边界（全是空格，供路径通过）
+//   行1:  [空][🐱][🐶] ... [🐰][空]   ← 实际游戏第1行
+//   行2:  [空][🐸][🐷] ... [🐵][空]   ← 实际游戏第2行
+//   ...    ...
+//   行8:  [空][🐔][🦊] ... [🐼][空]   ← 实际游戏第8行
+//   行9:  [空][空][空] ... [空][空]   ← 下边界（全是空格，供路径通过）
+//      ↑                ↑
+//     左边界            右边界
+//    （全是空格）       （全是空格）
+//
+// 所以 TOTAL_ROWS = ROWS + 2 = 10，TOTAL_COLS = COLS + 2 = 12
+// ============================================================================
 class GameBoard
 {
 public:
-    // 游戏区域尺寸
-    static constexpr int ROWS = 8;           // 实际游戏行数
-    static constexpr int COLS = 10;          // 实际游戏列数
-    static constexpr int TOTAL_ROWS = ROWS + 2;   // 含边界（上下各1行空行）
-    static constexpr int TOTAL_COLS = COLS + 2;   // 含边界（左右各1列空列）
-    static constexpr int TILE_TYPES = 20;    // 不同方块类型数量
-    static constexpr int EMPTY = 0;          // 空格标记
-    static constexpr int TOTAL_TILES = ROWS * COLS; // 总方块数 80
+    // ======================== 常量定义 ========================
 
-    GameBoard();
+    static constexpr int ROWS = 8;          // 实际游戏行数（玩家能看到的）
+    static constexpr int COLS = 10;         // 实际游戏列数
+    static constexpr int TOTAL_ROWS = ROWS + 2;  // 含边界的总行数（上下各多1行）
+    static constexpr int TOTAL_COLS = COLS + 2;  // 含边界的总列数（左右各多1列）
 
-    // 初始化与重置
-    void initBoard();                        // 生成随机棋盘
-    void reset();                            // 重置游戏
+    static constexpr int TILE_TYPES = 20;   // 方块的种类数（有20种不同的图案）
+    static constexpr int EMPTY = 0;         // 用数字0表示"空格"（没有方块）
+    static constexpr int TOTAL_TILES = ROWS * COLS;  // 总方块数 = 8×10 = 80个
 
-    // 路径查找（核心算法）
+    // 小知识：每个图案恰好有4个副本（80÷20=4），
+    // 这样才能保证每种图案都能配对消除。
+
+    // ======================== 构造与初始化 ========================
+
+    GameBoard();           // 构造函数：创建棋盘，初始化随机数生成器
+
+    void initBoard();      // 生成新棋盘：
+                           //   1. 为20种图案各生成4个方块（共80个）
+                           //   2. 随机打乱后放置到 8×10 的游戏区域
+                           //   3. 边界全部设为空格（EMPTY=0）
+
+    void reset();          // 重置游戏：其实就是调用 initBoard() 重新开始
+
+    // ======================== 路径查找（核心算法！）========================
+
+    // 查找从 (r1,c1) 到 (r2,c2) 的连接路径
+    // 参数：两个方块的坐标（行号和列号，使用 TOTAL_ROWS×TOTAL_COLS 的坐标系）
+    // 返回：PathInfo 结构体，valid=true 表示可以连接
+    // 查找策略：依次尝试 0折 → 1折 → 2折（因为越少转折越直观，优先找简单的）
     PathInfo findPath(int r1, int c1, int r2, int c2) const;
 
-    // 游戏状态
-    bool hasValidMoves() const;              // 是否还有可消除的配对
-    PathInfo findHint() const;               // 找一个可消除的配对
-    bool isWin() const;                      // 是否已通关
+    // ======================== 游戏状态查询 ========================
 
-    // 操作
-    void removeTiles(int r1, int c1, int r2, int c2);  // 移除一对方块
-    void shuffle();                          // 重排剩余方块
+    bool hasValidMoves() const;   // 棋盘上是否还有可以消除的配对？
+                                  // 用于判断是否需要自动重排
 
-    // 访问器
+    PathInfo findHint() const;    // 遍历整个棋盘，找到一对可以消除的方块
+                                  // 找到就返回路径，找不到返回 valid=false
+
+    bool isWin() const;           // 判断是否通关：剩余方块数为0时就是赢了
+
+    // ======================== 游戏操作 ========================
+
+    void removeTiles(int r1, int c1, int r2, int c2);  // 消除一对匹配的方块
+                                                        // 把它们的位置设为 EMPTY
+
+    void shuffle();               // 重排棋盘：把所有剩余方块的位置随机打乱
+                                  // 当没有可消除的配对时调用，给玩家创造新的机会
+
+    // ======================== 访问器（获取/设置数据）========================
+
     int getTile(int r, int c) const { return m_grid[r][c]; }
+        // 获取 (r,c) 位置的方块类型。返回0表示空格，1~20表示20种图案
     void setTile(int r, int c, int type) { m_grid[r][c] = type; }
+        // 设置 (r,c) 位置的方块类型
     bool isEmpty(int r, int c) const { return m_grid[r][c] == EMPTY; }
+        // 判断某个位置是否是空的
     int getScore() const { return m_score; }
+        // 获取当前分数（每消除一对得10分）
     int getRemainingTiles() const { return m_remainingTiles; }
+        // 获取剩余方块数（初始80个，每消除一对少2个）
     int getMoves() const { return m_moves; }
+        // 获取已走步数（每消除一对算一步）
     void addScore(int points) { m_score += points; }
+        // 增加分数
 
 private:
-    int m_grid[TOTAL_ROWS][TOTAL_COLS];      // 棋盘数组
-    int m_score;                              // 当前分数
-    int m_remainingTiles;                     // 剩余方块数
-    int m_moves;                              // 已走步数
+    // ======================== 数据成员（棋盘状态）========================
 
-    // 路径查找辅助函数
-    bool isRowClear(int r, int c1, int c2) const;    // 同一行两点间是否无阻挡
-    bool isColClear(int r1, int r2, int c) const;    // 同一列两点间是否无阻挡
+    int m_grid[TOTAL_ROWS][TOTAL_COLS];  // 二维数组，棋盘的核心！
+                                          // m_grid[r][c] 的值：
+                                          //   0 = 空格
+                                          //   1~20 = 20种不同的方块图案
+                                          // 用二维数组而不是一维数组，
+                                          // 因为行/列访问更直观
 
-    // 各折数连接尝试
+    int m_score;           // 当前分数（消除一对+10分）
+    int m_remainingTiles;  // 剩余方块数量（归零 = 通关）
+    int m_moves;           // 玩家走了多少步
+
+    // ======================== 路径查找辅助函数 ========================
+
+    // 判断同一行上，c1 和 c2 两列之间是否完全畅通（没有方块阻挡）
+    // 注意：不含端点！只检查 c1 和 c2 "之间"的部分
+    bool isRowClear(int r, int c1, int c2) const;
+
+    // 判断同一列上，r1 和 r2 两行之间是否完全畅通
+    bool isColClear(int r1, int r2, int c) const;
+
+    // 三种连接方式的查找函数
+    // 0折：两点在同一行或同一列，且中间全是空格
     PathInfo tryDirectLink(int r1, int c1, int r2, int c2) const;
+
+    // 1折：两点不在同行同列，但在某个拐角处"L形"连接
+    //       拐角位置必须是空格
     PathInfo tryOneTurnLink(int r1, int c1, int r2, int c2) const;
+
+    // 2折：最复杂的情况，需要扫描所有可能的中间行/列来找通路
     PathInfo tryTwoTurnLink(int r1, int c1, int r2, int c2) const;
 
-    // 随机数生成器
-    std::mt19937 m_rng;
+    // ======================== 随机数 ========================
+
+    std::mt19937 m_rng;    // Mersenne Twister 随机数生成器
+                            // mt19937 是 C++ 标准库提供的高质量随机数引擎
+                            // 用于生成棋盘时打乱方块顺序
 };
