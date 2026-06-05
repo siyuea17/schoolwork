@@ -24,7 +24,7 @@ public:
 	MyString& operator=(MyString&& ms);
 
 	// 析构函数，释放内存
-	virtual~MyString();
+	virtual ~MyString();
 
 	// 重载 <<
 	friend ostream& operator << (ostream& os, MyString& ms);
@@ -33,16 +33,16 @@ public:
 	friend istream& operator >> (istream& is, MyString& ms);
 
 	// 重载 [] 
-	char& operator [] (int index);
+	char& operator[] (int index);
 
 	// 重载 =，注意用深拷贝
-	MyString& operator = (const char* ch);
+	MyString& operator= (const char* ch);
 
 	// 重载赋值运算符
-	MyString& operator = (MyString& ms);
+	MyString& operator= (const MyString& ms);
 
 	// 重载 +，串连接操作
-	MyString  operator + (MyString& ms);
+	MyString  operator+ (const MyString& ms);
 
 	//返回字符串内容的长度（以字节为单位）
 	long GetLength() const;
@@ -59,10 +59,10 @@ public:
 	bool operator != (const MyString& ms);
 
 	//截取从 pos 开始（包括 0）的 n 个字符子串，并返回
-	MyString  substr(int pos, int n);
+	MyString substr(int pos, int n);
 
 	//截取从 pos 开始（包括 0）到末尾的所有字符子串，并返回
-	MyString  substr(int pos);
+	MyString substr(int pos);
 
 	// 用ms2替换ms1
 	MyString replace(const MyString& ms1, const MyString& ms2);

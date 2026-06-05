@@ -38,6 +38,15 @@
     <ClInclude Include="GameBoard.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="GameSettings.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <QtMoc Include="StartWidget.h">
+      <Filter>头文件</Filter>
+    </QtMoc>
+    <QtMoc Include="SettingsDialog.h">
+      <Filter>头文件</Filter>
+    </QtMoc>
     <ClCompile Include="MainWindow.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
@@ -47,10 +56,19 @@
     <ClCompile Include="GameWidget.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="StartWidget.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="SettingsDialog.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="ClassDiagram.cd" />
   </ItemGroup>
 </Project>

@@ -1,130 +1,120 @@
 // ============================================================================
 // 文件：GameBoard.cpp
 // 角色：GameBoard 类的实现文件——包含连连看所有核心算法
-//
-// "头文件(.h)"和"实现文件(.cpp)"的关系：
-//   .h 文件 = "目录/说明书"，声明这个类有什么功能（函数名、参数）
-//   .cpp 文件 = "具体内容"，实现每个函数具体怎么做
-//   这种分离是 C++ 的惯例，让代码结构清晰、编译更快
 // ============================================================================
 
-#include "GameBoard.h"    // 包含自己的头文件（实现声明在.h中的函数）
-#include <QVector>         // Qt 动态数组（类似 std::vector）
-#include <algorithm>       // std::shuffle（打乱数组）
-#include <random>          // 随机数相关的工具
-#include <chrono>          // 时间相关（用当前时间做随机种子）
+#include "GameBoard.h"
+#include <QVector>
+#include <QDateTime>
+#include <algorithm>
+#include <random>
+#include <chrono>
 
 // ============================================================================
-// 构造函数 —— 对象被创建时自动调用
+// 构造函数 —— 动态维度版本
 //
-// 语法说明：
-//   GameBoard::GameBoard()     ← "类名::函数名" 表示这是 GameBoard 类的构造函数
-//   : m_score(0)               ← "初始化列表"，在进入函数体之前就给成员变量赋值
-//   , m_remainingTiles(0)      ← 这是 C++ 推荐的写法，比在函数体内赋值效率高
-//   , m_moves(0)
+// 参数：
+//   rows —— 实际游戏行数（默认8）
+//   cols —— 实际游戏列数（默认10）
+//   tileTypes —— 图案种类数（默认20）
+//   copiesPerType —— 每种图案的副本数（默认4→20×4=80方块）
+//
+// 注意：棋盘总大小还要在四周各加一行/列边界（用于路径绕过）
 // ============================================================================
-GameBoard::GameBoard()
-    : m_score(0)             // 初始分数为0
-    , m_remainingTiles(0)    // 剩余方块暂时为0（initBoard 时会设为80）
-    , m_moves(0)             // 步数为0
+GameBoard::GameBoard(int rows, int cols, int tileTypes, int copiesPerType)
+    : m_rows(rows)
+    , m_cols(cols)
+    , m_tileTypes(tileTypes)
+    , m_copiesPerType(copiesPerType)
+    , m_score(0)
+    , m_remainingTiles(0)
+    , m_moves(0)
+    , m_comboCount(0)
+    , m_lastMatchTimeMs(0)
 {
-    // ----- 初始化随机数生成器 -----
-    // 为什么需要"种子"？
-    //   计算机的随机数是"伪随机"——用数学公式算出来的，不是真随机。
-    //   如果每次用同样的"种子"（初始值），就会生成同样的"随机"序列。
-    //   所以我们需要一个每次都不同的种子——当前时间就很合适！
-    //
-    // std::chrono::steady_clock::now().time_since_epoch().count()
-    //   翻译：从"时钟纪元"到现在过了多少个计时单位
-    //   这个值每时每刻都在变，用它做种子，每次运行游戏棋盘都不一样
+    // ===== 初始化棋盘网格 =====
+    // 分配 totalRows × totalCols 的二维向量
+    int tr = totalRows();
+    int tc = totalCols();
+    m_grid.resize(tr);
+    for (int r = 0; r < tr; ++r)
+    {
+        m_grid[r].resize(tc);
+        for (int c = 0; c < tc; ++c)
+            m_grid[r][c] = EMPTY;
+    }
+
+    // ===== 初始化随机数生成器 =====
+    // 用当前时间的毫秒数做种子，每次运行棋盘布局不同
     m_rng.seed(static_cast<unsigned int>(
         std::chrono::steady_clock::now().time_since_epoch().count()));
-
-    // ----- 初始化棋盘为全空 -----
-    // 用两层 for 循环遍历所有格子，把所有位置都设为 EMPTY(0)
-    // 外层循环：行（r 从 0 到 TOTAL_ROWS-1）
-    // 内层循环：列（c 从 0 到 TOTAL_COLS-1）
-    for (int r = 0; r < TOTAL_ROWS; ++r)
-        for (int c = 0; c < TOTAL_COLS; ++c)
-            m_grid[r][c] = EMPTY;
 }
 
 // ============================================================================
 // initBoard() —— 生成一个全新的随机棋盘
 //
-// 连连看的棋盘规则：
-//   - 有20种不同的图案（TILE_TYPES = 20）
-//   - 每种图案恰好出现4次（共80个方块）
-//   - 所有方块随机放置在 8×10 的游戏区域
-//
-// 算法步骤（读代码前先了解整体思路）：
-//   第1步：生成一个包含80个方块的列表（每种4个）
-//   第2步：用随机数打乱这个列表
-//   第3步：按行按列依次放置到游戏区域
-//   第4步：确保边界全是空格
-//   第5步：重置分数/步数
+// 算法：
+//   1. 生成方块列表：每种图案 copiesPerType 个副本
+//   2. 随机打乱
+//   3. 按行逐列放置到游戏区域
+//   4. 确保边界全是空格
 // ============================================================================
 void GameBoard::initBoard()
 {
-    // ---- 第1步：生成方块列表 ----
-    // QVector<int> 是 Qt 的整数动态数组
-    // reserve(80) 预先分配80个位置的内存，避免后续插入时反复扩容（性能优化）
-    QVector<int> tiles;
-    tiles.reserve(TOTAL_TILES);
+    int tr = totalRows();
+    int tc = totalCols();
 
-    // 对每种图案（1~20），生成4个副本放进列表
-    for (int type = 1; type <= TILE_TYPES; ++type)
+    // ---- 第1步：生成方块列表 ----
+    // 总方块数 = rows × cols = 图案种类 × 每类副本
+    int total = m_rows * m_cols;
+    QVector<int> tiles;
+    tiles.reserve(total);
+
+    for (int type = 1; type <= m_tileTypes; ++type)
     {
-        for (int i = 0; i < 4; ++i)
-            tiles.append(type);          // append = 往数组末尾添加元素
+        for (int i = 0; i < m_copiesPerType; ++i)
+            tiles.append(type);
     }
-    // 现在 tiles 里有80个元素：[1,1,1,1, 2,2,2,2, ..., 20,20,20,20]
+    // 总方块数对不上的情况（参数不当）→ 按实际填充
+    while (tiles.size() < total)
+        tiles.append(1);
 
     // ---- 第2步：随机打乱 ----
-    // std::shuffle 是 C++ 标准库的"洗牌"函数
-    // 参数：要打乱的范围（begin到end）、随机数生成器
-    // 结果：tiles 里的80个元素顺序完全随机
     std::shuffle(tiles.begin(), tiles.end(), m_rng);
 
     // ---- 第3步：放置到棋盘 ----
-    //   ROWS = 8, COLS = 10（实际游戏区域）
-    //   因为棋盘有边界，游戏区域从 (1,1) 开始到 (ROWS, COLS) 结束
-    //   边界（第0行、第9行、第0列、第11列）要留给路径通过
-    int index = 0;                         // 当前取到 tiles 的第几个方块
-    for (int r = 1; r <= ROWS; ++r)       // 行：1到8（跳过边界）
+    int index = 0;
+    for (int r = 1; r <= m_rows; ++r)
     {
-        for (int c = 1; c <= COLS; ++c)   // 列：1到10（跳过边界）
+        for (int c = 1; c <= m_cols; ++c)
         {
-            m_grid[r][c] = tiles[index++]; // 放置方块，然后 index 加1
-                                           // index++ 是"先用后加"的意思
+            if (index < tiles.size())
+                m_grid[r][c] = tiles[index++];
+            else
+                m_grid[r][c] = EMPTY;
         }
     }
 
-    // ---- 第4步：确保边界全部为空格 ----
-    // 先把左右两列（第0列和第11列）清空
-    for (int r = 0; r < TOTAL_ROWS; ++r)
+    // ---- 第4步：清空边界 ----
+    for (int r = 0; r < tr; ++r)
     {
-        m_grid[r][0] = EMPTY;                // 左边界
-        m_grid[r][TOTAL_COLS - 1] = EMPTY;   // 右边界（TOTAL_COLS-1 = 11）
+        m_grid[r][0] = EMPTY;
+        m_grid[r][tc - 1] = EMPTY;
     }
-    // 再把上下两行（第0行和第9行）清空
-    for (int c = 0; c < TOTAL_COLS; ++c)
+    for (int c = 0; c < tc; ++c)
     {
-        m_grid[0][c] = EMPTY;                // 上边界
-        m_grid[TOTAL_ROWS - 1][c] = EMPTY;   // 下边界（TOTAL_ROWS-1 = 9）
+        m_grid[0][c] = EMPTY;
+        m_grid[tr - 1][c] = EMPTY;
     }
 
     // ---- 第5步：重置游戏状态 ----
     m_score = 0;
-    m_remainingTiles = TOTAL_TILES;  // 80个方块都在
+    m_remainingTiles = total;
     m_moves = 0;
+    m_comboCount = 0;
+    m_lastMatchTimeMs = 0;
 }
 
-// ============================================================================
-// reset() —— 重置游戏（就是重新生成棋盘）
-// 这个函数很简单，直接调用 initBoard()
-// 之所以单独写一个函数，是为了给外部一个清晰的"重新开始"接口
-// ============================================================================
 void GameBoard::reset()
 {
     initBoard();
@@ -132,53 +122,27 @@ void GameBoard::reset()
 
 // ============================================================================
 // isRowClear() —— 判断同一行上两点之间是否畅通无阻
-//
-// 参数：
-//   r  = 行号（两点在同一行）
-//   c1 = 第一个点的列号
-//   c2 = 第二个点的列号
-//
-// 返回值：true = 畅通，false = 有阻挡
-//
-// 算法：
-//   找出 c1 和 c2 中较小的那个作为起点，
-//   然后从起点+1 开始逐个检查到终点-1（不包含端点本身！）
-//   只要中间有一个位置不是空格，就说明被挡住了
-//
-// 举例：检查第3行第2列和第7列之间
-//   minC=2, maxC=7
-//   检查 c=3,4,5,6 这四个位置（不含端点2和7）
-//   如果都是空格 → true，否则 → false
 // ============================================================================
 bool GameBoard::isRowClear(int r, int c1, int c2) const
 {
-    // 三元运算符：(条件) ? 值A : 值B
-    // 如果条件成立，取A；不成立，取B
-    int minC = (c1 < c2) ? c1 : c2;  // 较小的列号
-    int maxC = (c1 < c2) ? c2 : c1;  // 较大的列号
+    int minC = (c1 < c2) ? c1 : c2;
+    int maxC = (c1 < c2) ? c2 : c1;
 
-    // 从 minC+1 到 maxC-1，逐个格子检查
     for (int c = minC + 1; c < maxC; ++c)
     {
-        if (m_grid[r][c] != EMPTY)    // 如果某个位置不是空的
-            return false;              // 说明有方块挡着，不通！
+        if (m_grid[r][c] != EMPTY)
+            return false;
     }
-    return true;                       // 所有中间位置都是空的，畅通！
+    return true;
 }
 
 // ============================================================================
 // isColClear() —— 判断同一列上两点之间是否畅通无阻
-//
-// 和 isRowClear 原理完全一样，只是方向变成垂直的
-// 参数 r1, r2 是两个行号，c 是共同的列号
-//
-// 举例：检查第2行到第5行在第4列是否畅通
-//   检查 r=3,4 （不含端点2和5）
 // ============================================================================
 bool GameBoard::isColClear(int r1, int r2, int c) const
 {
-    int minR = (r1 < r2) ? r1 : r2;  // 较小的行号
-    int maxR = (r1 < r2) ? r2 : r1;  // 较大的行号
+    int minR = (r1 < r2) ? r1 : r2;
+    int maxR = (r1 < r2) ? r2 : r1;
 
     for (int r = minR + 1; r < maxR; ++r)
     {
@@ -190,330 +154,225 @@ bool GameBoard::isColClear(int r1, int r2, int c) const
 
 // ============================================================================
 // tryDirectLink() —— "0折连接"（直线连接）
-//
-// 这是最简单的连接方式：两个方块在同行或同列，中间完全没有阻挡。
-//
-// 想象用一根笔直的线连接两点：
-//   - 如果两点在同一行且之间全是空格 → 横线直连 ✓
-//   - 如果两点在同一列且之间全是空格 → 竖线直连 ✓
-//   - 否则 → 无法0折连接 ✗
-//
-// 参数：(r1,c1) 和 (r2,c2) 是两个方块的位置
-// 返回值：PathInfo，valid=true 表示找到了直线连接
 // ============================================================================
 PathInfo GameBoard::tryDirectLink(int r1, int c1, int r2, int c2) const
 {
-    PathInfo result;  // 默认 valid=false
+    PathInfo result;
 
-    // 情况A：同一行 && 之间无阻挡 → 横线直连
     if (r1 == r2 && isRowClear(r1, c1, c2))
     {
         result.valid = true;
-        // 路径只有起点和终点两个点（不需要拐弯）
-        // QPoint(x=列, y=行) ← 注意 Qt 的坐标习惯：x是水平方向，y是垂直方向
         result.corners = { QPoint(c1, r1), QPoint(c2, r2) };
     }
-    // 情况B：同一列 && 之间无阻挡 → 竖线直连
     else if (c1 == c2 && isColClear(r1, r2, c1))
     {
         result.valid = true;
         result.corners = { QPoint(c1, r1), QPoint(c2, r2) };
     }
-    // else: 既不同行也不同列，0折不可能，返回 result（valid=false）
 
     return result;
 }
 
 // ============================================================================
 // tryOneTurnLink() —— "1折连接"（L形连接，拐一个弯）
-//
-// 算法思路：
-//   两点不在同行同列时，可能通过一个拐角连接，形成"L"形。
-//
-//   拐角位置有两种可能（看图）：
-//
-//     拐角方案1: (r1, c2)          拐角方案2: (r2, c1)
-//     (r1,c1) ────┐               (r1,c1)
-//                  │                        │
-//                  │                        │
-//                  └────(r2,c2)             └────(r2,c2)
-//
-//   拐角处必须是空格，且两条线段中间都不能有阻挡。
-//
-//   检查方案1：拐角在 (r1, c2)
-//     - 拐角必须是空格
-//     - 从 (r1,c1) 到拐角：同行，检查 isRowClear(r1, c1, c2)
-//     - 从拐角到 (r2,c2)：同列，检查 isColClear(r1, r2, c2)
-//
-//   检查方案2：拐角在 (r2, c1)
-//     - 拐角必须是空格
-//     - 从 (r1,c1) 到拐角：同列，检查 isColClear(r1, r2, c1)
-//     - 从拐角到 (r2,c2)：同行，检查 isRowClear(r2, c1, c2)
 // ============================================================================
 PathInfo GameBoard::tryOneTurnLink(int r1, int c1, int r2, int c2) const
 {
     PathInfo result;
 
-    // ---- 拐角方案1：拐点在 (r1, c2) ----
-    // 即：先横向走到对方列，再纵向走到对方行
-    if (m_grid[r1][c2] == EMPTY)  // 拐角位置必须是空格，否则线段会穿过方块
+    // 拐角方案1：拐点在 (r1, c2)
+    if (m_grid[r1][c2] == EMPTY)
     {
-        // 同时检查：横线段 (r1, c1→c2) 和 竖线段 (r1→r2, c2) 是否都畅通
         if (isRowClear(r1, c1, c2) && isColClear(r1, r2, c2))
         {
             result.valid = true;
-            // 三个点：起点 → 拐角 → 终点
-            result.corners = { QPoint(c1, r1),      // 起点
-                               QPoint(c2, r1),      // 拐角（在起点同行、终点同列）
-                               QPoint(c2, r2) };    // 终点
-            return result;  // 找到了，直接返回，不用检查方案2
-        }
-    }
-
-    // ---- 拐角方案2：拐点在 (r2, c1) ----
-    // 即：先纵向走到对方行，再横向走到对方列
-    if (m_grid[r2][c1] == EMPTY)  // 拐角位置必须是空格
-    {
-        // 同时检查：竖线段 (r1→r2, c1) 和 横线段 (r2, c1→c2) 是否都畅通
-        if (isColClear(r1, r2, c1) && isRowClear(r2, c1, c2))
-        {
-            result.valid = true;
-            // 三个点：起点 → 拐角 → 终点
-            result.corners = { QPoint(c1, r1),      // 起点
-                               QPoint(c1, r2),      // 拐角（在起点同列、终点同行）
-                               QPoint(c2, r2) };    // 终点
+            result.corners = { QPoint(c1, r1), QPoint(c2, r1), QPoint(c2, r2) };
             return result;
         }
     }
 
-    return result;  // 两种方案都不通，返回 valid=false
+    // 拐角方案2：拐点在 (r2, c1)
+    if (m_grid[r2][c1] == EMPTY)
+    {
+        if (isColClear(r1, r2, c1) && isRowClear(r2, c1, c2))
+        {
+            result.valid = true;
+            result.corners = { QPoint(c1, r1), QPoint(c1, r2), QPoint(c2, r2) };
+            return result;
+        }
+    }
+
+    return result;
 }
 
 // ============================================================================
 // tryTwoTurnLink() —— "2折连接"（Z形或U形，拐两个弯）
 //
-// 这是最复杂的情况。当0折和1折都失败时，尝试2折连接。
-//
 // 核心思路：扫描所有可能的"中间行"和"中间列"
-//
-// 【扫描中间行】（画成Z形横着走）：
-//   对于每一行 r（0 到 TOTAL_ROWS-1）：
-//     如果从 (r1,c1) 能竖着走到 (r,c1)，然后从 (r,c1) 能横着走到 (r,c2)，
-//     再从 (r,c2) 能竖着走到 (r2,c2)，那就找到了！
-//
-//   图示：
-//     (r1,c1) ──→ (r,c1) ──→ (r,c2) ──→ (r2,c2)
-//        ↑竖        ↑横        ↑竖
-//      线段1      线段2      线段3
-//
-//   要求：中间行上的两个点 (r,c1) 和 (r,c2) 都必须是空格
-//
-// 【扫描中间列】（画成Z形竖着走）：
-//   对于每一列 c（0 到 TOTAL_COLS-1）：
-//     如果从 (r1,c1) 能横着走到 (r1,c)，然后从 (r1,c) 能竖着走到 (r2,c)，
-//     再从 (r2,c) 能横着走到 (r2,c2)，那就找到了！
-//
-//   图示：
-//     (r1,c1) ──→ (r1,c) ──→ (r2,c) ──→ (r2,c2)
-//        ↑横        ↑竖        ↑横
-//      线段1      线段2      线段3
-//
-//   要求：中间列上的两个点 (r1,c) 和 (r2,c) 都必须是空格
-//
-// 为什么跳过 r==r1 或 r==r2 的行？
-//   这些情况已经被 0折（同行直连）或 1折 处理过了，不需要重复检查。
-//
-// 为什么边界行/列也参与扫描？
-//   这就是为什么我们给棋盘加了边界！两点可以通过棋盘"外面"绕过去。
-//   比如两个都在边缘的方块，可以沿着边界外面拐两个弯连接。
+//   扫描中间行：竖→横→竖
+//   扫描中间列：横→竖→横
 // ============================================================================
 PathInfo GameBoard::tryTwoTurnLink(int r1, int c1, int r2, int c2) const
 {
+    int tr = totalRows();
+    int tc = totalCols();
     PathInfo result;
 
-    // ==================== 扫描所有可能的中间行 ====================
-    for (int r = 0; r < TOTAL_ROWS; ++r)
+    // ===== 扫描所有可能的中间行 =====
+    for (int r = 0; r < tr; ++r)
     {
-        // 跳过那些已经被 0折/1折 处理过的行
         if (r == r1 || r == r2) continue;
 
-        // 中间行上的两个关键位置必须是空格
-        if (m_grid[r][c1] != EMPTY) continue;  // (r, c1) 必须为空
-        if (m_grid[r][c2] != EMPTY) continue;  // (r, c2) 必须为空
+        if (m_grid[r][c1] != EMPTY) continue;
+        if (m_grid[r][c2] != EMPTY) continue;
 
-        // 检查三条线段是否都畅通：
-        //   竖线段1: (r1,c1) → (r,c1)   ← 从起点竖着走到中间行
-        //   横线段:   (r,c1)  → (r,c2)   ← 在中间行横着走
-        //   竖线段2: (r,c2)  → (r2,c2)   ← 从中间行竖着走到终点
-        if (isColClear(r1, r, c1) &&        // 检查竖线段1
-            isRowClear(r, c1, c2) &&         // 检查横线段
-            isColClear(r, r2, c2))           // 检查竖线段2
+        if (isColClear(r1, r, c1) && isRowClear(r, c1, c2) && isColClear(r, r2, c2))
         {
             result.valid = true;
-            // 四个点：起点 → 拐角1 → 拐角2 → 终点
-            result.corners = { QPoint(c1, r1),   // 起点
-                               QPoint(c1, r),    // 第一个拐角（竖线段1的终点）
-                               QPoint(c2, r),    // 第二个拐角（横线段的终点）
-                               QPoint(c2, r2) }; // 终点
-            return result;  // 找到一条路径就立即返回（不需要找最短的）
-        }
-    }
-
-    // ==================== 扫描所有可能的中间列 ====================
-    for (int c = 0; c < TOTAL_COLS; ++c)
-    {
-        // 跳过已被 0折/1折 处理过的列
-        if (c == c1 || c == c2) continue;
-
-        // 中间列上的两个关键位置必须是空格
-        if (m_grid[r1][c] != EMPTY) continue;  // (r1, c) 必须为空
-        if (m_grid[r2][c] != EMPTY) continue;  // (r2, c) 必须为空
-
-        // 检查三条线段是否都畅通：
-        //   横线段1: (r1,c1) → (r1,c)   ← 从起点横着走到中间列
-        //   竖线段:   (r1,c)  → (r2,c)   ← 在中间列竖着走
-        //   横线段2: (r2,c)  → (r2,c2)   ← 从中间列横着走到终点
-        if (isRowClear(r1, c1, c) &&         // 检查横线段1
-            isColClear(r1, r2, c) &&          // 检查竖线段
-            isRowClear(r2, c, c2))            // 检查横线段2
-        {
-            result.valid = true;
-            // 四个点：起点 → 拐角1 → 拐角2 → 终点
-            result.corners = { QPoint(c1, r1),   // 起点
-                               QPoint(c, r1),    // 第一个拐角
-                               QPoint(c, r2),    // 第二个拐角
-                               QPoint(c2, r2) }; // 终点
+            result.corners = { QPoint(c1, r1), QPoint(c1, r), QPoint(c2, r), QPoint(c2, r2) };
             return result;
         }
     }
 
-    return result;  // 所有中间行/列都不通，返回 valid=false
+    // ===== 扫描所有可能的中间列 =====
+    for (int c = 0; c < tc; ++c)
+    {
+        if (c == c1 || c == c2) continue;
+
+        if (m_grid[r1][c] != EMPTY) continue;
+        if (m_grid[r2][c] != EMPTY) continue;
+
+        if (isRowClear(r1, c1, c) && isColClear(r1, r2, c) && isRowClear(r2, c, c2))
+        {
+            result.valid = true;
+            result.corners = { QPoint(c1, r1), QPoint(c, r1), QPoint(c, r2), QPoint(c2, r2) };
+            return result;
+        }
+    }
+
+    return result;
 }
 
 // ============================================================================
 // findPath() —— 主路径查找函数（对外接口）
 //
-// 这是外部调用的"总入口"。它会按顺序尝试三种连接方式：
-//   1. 先尝试 0折（直线）—— 最简单直接
-//   2. 再尝试 1折（L形）  —— 拐一个弯
-//   3. 最后尝试 2折（Z形） —— 拐两个弯
-//
-// 找到任何一种就立即返回，不用继续尝试更复杂的（因为没必要）。
-//
-// 参数和返回值说明：
-//   r1, c1 — 第一个方块的行号和列号
-//   r2, c2 — 第二个方块的行号和列号
-//   返回 PathInfo，如果 valid==true 说明两个方块可以消除
-//
-// 前置检查（调用 findPath 之前就应该确认的）：
-//   1. 两个方块类型相同
-//   2. 两个方块不是同一个位置
-//   3. 两个方块都不是空格
+// 按顺序尝试 0折 → 1折 → 2折（越简单越优先）
 // ============================================================================
 PathInfo GameBoard::findPath(int r1, int c1, int r2, int c2) const
 {
-    // ---- 边界检查：确保坐标在棋盘范围内 ----
-    if (r1 < 0 || r1 >= TOTAL_ROWS || c1 < 0 || c1 >= TOTAL_COLS)
-        return PathInfo();
-    if (r2 < 0 || r2 >= TOTAL_ROWS || c2 < 0 || c2 >= TOTAL_COLS)
-        return PathInfo();
+    int tr = totalRows();
+    int tc = totalCols();
 
-    // ---- 基本条件检查 ----
-    // 两个位置都必须是"非空"的方块
-    if (m_grid[r1][c1] == EMPTY || m_grid[r2][c2] == EMPTY)
-        return PathInfo();
-    // 两个方块必须是相同类型（图案一样才能消除）
-    if (m_grid[r1][c1] != m_grid[r2][c2])
-        return PathInfo();
-    // 不能是同一个位置（自己和自己不能配对）
-    if (r1 == r2 && c1 == c2)
-        return PathInfo();
+    if (r1 < 0 || r1 >= tr || c1 < 0 || c1 >= tc) return PathInfo();
+    if (r2 < 0 || r2 >= tr || c2 < 0 || c2 >= tc) return PathInfo();
 
-    // ---- 按顺序尝试三种连接方式 ----
-    // 注意：这里利用了 C++ 的"短路逻辑"——
-    //   一旦 path.valid 为 true，后面的就不会执行了
+    if (m_grid[r1][c1] == EMPTY || m_grid[r2][c2] == EMPTY) return PathInfo();
+    if (m_grid[r1][c1] != m_grid[r2][c2]) return PathInfo();
+    if (r1 == r2 && c1 == c2) return PathInfo();
 
-    // 尝试0折：直线连接
     PathInfo path = tryDirectLink(r1, c1, r2, c2);
-    if (path.valid) return path;     // 找到了！直接返回
+    if (path.valid) return path;
 
-    // 尝试1折：L形连接
     path = tryOneTurnLink(r1, c1, r2, c2);
-    if (path.valid) return path;     // 找到了！直接返回
+    if (path.valid) return path;
 
-    // 尝试2折：Z形连接
     path = tryTwoTurnLink(r1, c1, r2, c2);
-    if (path.valid) return path;     // 找到了！直接返回
+    if (path.valid) return path;
 
-    // 三种方式都失败了——这两个方块无法连接
-    return PathInfo();  // 返回一个 valid=false 的 PathInfo
+    return PathInfo();
 }
 
 // ============================================================================
 // removeTiles() —— 消除一对匹配的方块
 //
-// 把两个位置都设为空格（EMPTY=0），并更新游戏状态。
-//
-// 参数：两对方块的位置 (r1,c1) 和 (r2,c2)
-//
-// 副作用（函数除了消除方块还做了什么）：
-//   - m_remainingTiles 减少2（一次消除两个）
-//   - m_moves 增加1（走了一步）
+// 副作用：
+//   - m_remainingTiles 减少2
+//   - m_moves 增加1
+//   - 记录消除时间戳用于连击判断
 // ============================================================================
 void GameBoard::removeTiles(int r1, int c1, int r2, int c2)
 {
-    m_grid[r1][c1] = EMPTY;          // 第一个方块变空格
-    m_grid[r2][c2] = EMPTY;          // 第二个方块变空格
-    m_remainingTiles -= 2;           // 剩余方块数减2
-    m_moves++;                       // 步数加1
+    m_grid[r1][c1] = EMPTY;
+    m_grid[r2][c2] = EMPTY;
+    m_remainingTiles -= 2;
+    m_moves++;
+}
+
+// ============================================================================
+// calculateComboScore() —— 计算连击分
+//
+// 连击机制：
+//   - 如果上一次消除距今 ≤ 3 秒 → 连击+1
+//   - 如果超过 3 秒 → 连击归零重新开始
+//   - 基础分 10，每连击一次 +5
+//   - 公式：comboScore = 10 + comboCount × 5
+//
+// 举例：玩家3秒内连续消除3对
+//   第1对：连击0 → 10分
+//   第2对：连击1 → 15分（10 + 1×5）
+//   第3对：连击2 → 20分（10 + 2×5）
+//   总计：45分（比没有连击系统多15分加成）
+//
+// 注意：这个函数在 removeTiles() 之前调用，
+//       因为需要比较"上一次"的时间戳来判断连击。
+// ============================================================================
+int GameBoard::calculateComboScore()
+{
+    qint64 now = QDateTime::currentMSecsSinceEpoch();
+
+    // 如果这不是第一次消除，检查是否在连击窗口内
+    if (m_moves > 0 && m_lastMatchTimeMs > 0)
+    {
+        qint64 elapsed = now - m_lastMatchTimeMs;
+        if (elapsed <= COMBO_WINDOW_MS)
+        {
+            // 在窗口内 → 连击继续
+            m_comboCount++;
+        }
+        else
+        {
+            // 超时 → 连击中断重新开始
+            m_comboCount = 0;
+        }
+    }
+
+    // 记录本次消除时间
+    m_lastMatchTimeMs = now;
+
+    // 基础分 10，连击加成每级 +5
+    int baseScore = 10;
+    int bonus = m_comboCount * 5;
+    return baseScore + bonus;
 }
 
 // ============================================================================
 // findHint() —— 找一对可以消除的方块（用于"提示"功能）
 //
-// 算法思路：
-//   遍历整个棋盘，找到所有相同类型方块的配对，对每个配对调用 findPath()。
-//   找到第一个可以连接的配对就立即返回。
-//
-// 优化：先按类型分组
-//   与其遍历所有 80×79÷2 ≈ 3160 个配对（太慢了），
-//   不如先把方块按类型分成20组，然后在每组内部两两配对。
-//   每组只有4个方块，只需检查 4×3÷2 = 6 个配对。
-//   总共 20×6 = 120 个配对（快多了！）
-//
-// 返回值：PathInfo，valid=true 表示找到了；valid=false 表示没有可消除的
+// 优化：先按类型分组，再组内两两配对查找。
+//   比如标准难度20种图案每组4个，只需 20×6=120 个配对检查，
+//   远少于全部 80×79÷2=3160 个。
 // ============================================================================
 PathInfo GameBoard::findHint() const
 {
-    // ---- 收集所有方块位置，按类型分组 ----
-    // 创建一个数组，数组下标就是方块类型
-    // positionsByType[1] 存所有类型1方块的位置
-    // positionsByType[2] 存所有类型2方块的位置
-    // ...
-    // positionsByType[0] 不用（类型从1开始）
-    QVector<QPoint> positionsByType[TILE_TYPES + 1];
+    // 收集所有方块位置，按类型分组
+    QVector<QVector<QPoint>> positionsByType(m_tileTypes + 1);
 
-    // 遍历游戏区域（跳过边界）
-    for (int r = 1; r <= ROWS; ++r)
+    for (int r = 1; r <= m_rows; ++r)
     {
-        for (int c = 1; c <= COLS; ++c)
+        for (int c = 1; c <= m_cols; ++c)
         {
             int type = m_grid[r][c];
-            if (type != EMPTY)                   // 如果不是空格
-                positionsByType[type].append(QPoint(c, r));  // 记录位置
-                // QPoint(x=列, y=行)
+            if (type != EMPTY)
+                positionsByType[type].append(QPoint(c, r));
         }
     }
 
-    // ---- 对每种类型，尝试所有配对 ----
-    for (int type = 1; type <= TILE_TYPES; ++type)
+    // 对每种类型，两两尝试配对
+    for (int type = 1; type <= m_tileTypes; ++type)
     {
         const QVector<QPoint>& positions = positionsByType[type];
-        int count = positions.size();           // 这种类型的方块还剩几个
+        int count = positions.size();
 
-        // 双重循环：枚举所有两两配对
-        // i 从 0 到 count-2, j 从 i+1 到 count-1
-        // 这样可以避免 (A,B) 和 (B,A) 重复检查
         for (int i = 0; i < count; ++i)
         {
             for (int j = i + 1; j < count; ++j)
@@ -521,20 +380,17 @@ PathInfo GameBoard::findHint() const
                 int r1 = positions[i].y(), c1 = positions[i].x();
                 int r2 = positions[j].y(), c2 = positions[j].x();
                 PathInfo path = findPath(r1, c1, r2, c2);
-                if (path.valid)                  // 找到了！
-                    return path;                 // 立即返回
+                if (path.valid)
+                    return path;
             }
         }
     }
 
-    return PathInfo();  // 所有类型的所有配对都试过了，没一个能连
+    return PathInfo();
 }
 
 // ============================================================================
 // hasValidMoves() —— 判断棋盘上是否还存在可消除的配对
-//
-// 实现很简单：调用 findHint()，看它返回的路径是否有效
-// 如果 findHint() 找不到配对，说明死局了，需要自动重排
 // ============================================================================
 bool GameBoard::hasValidMoves() const
 {
@@ -543,8 +399,6 @@ bool GameBoard::hasValidMoves() const
 
 // ============================================================================
 // isWin() —— 判断是否通关
-//
-// 通关条件：所有方块都被消除了（剩余方块数为0）
 // ============================================================================
 bool GameBoard::isWin() const
 {
@@ -554,47 +408,100 @@ bool GameBoard::isWin() const
 // ============================================================================
 // shuffle() —— 重排剩余方块
 //
-// 什么时候需要重排？
-//   当棋盘上还存在方块，但没有任何可以消除的配对时，
-//   游戏就"卡住了"。此时把所有剩余方块的位置随机打乱，
-//   通常就能产生新的可消除配对。
-//
-// 算法步骤：
-//   1. 收集所有非空的方块类型
-//   2. 用随机数打乱它们的顺序
-//   3. 按打乱后的顺序放回原位
-//
-// 注意：只改变方块的类型分布，不改变哪些位置有方块、哪些位置是空格。
-//       换句话说——空位还是那些空位，方块的图案被重新洗牌了。
+// 只改变方块的图案分布，不改变空位的位置。
+// 空位还是空位，方块图案被随机洗牌。
 // ============================================================================
 void GameBoard::shuffle()
 {
-    // ---- 第1步：收集所有剩余方块 ----
+    // 收集所有剩余方块
     QVector<int> remaining;
-    remaining.reserve(m_remainingTiles);  // 预分配内存
-    for (int r = 1; r <= ROWS; ++r)
+    remaining.reserve(m_remainingTiles);
+    for (int r = 1; r <= m_rows; ++r)
     {
-        for (int c = 1; c <= COLS; ++c)
+        for (int c = 1; c <= m_cols; ++c)
         {
-            if (m_grid[r][c] != EMPTY)          // 如果这个位置还有方块
-                remaining.append(m_grid[r][c]);  // 把类型编号记下来
+            if (m_grid[r][c] != EMPTY)
+                remaining.append(m_grid[r][c]);
         }
     }
 
-    // ---- 第2步：随机打乱 ----
+    // 随机打乱
     std::shuffle(remaining.begin(), remaining.end(), m_rng);
 
-    // ---- 第3步：按新顺序放回 ----
-    int idx = 0;  // 指向 remaining 中当前要放回的方块
-    for (int r = 1; r <= ROWS; ++r)
+    // 按新顺序放回
+    int idx = 0;
+    for (int r = 1; r <= m_rows; ++r)
     {
-        for (int c = 1; c <= COLS; ++c)
+        for (int c = 1; c <= m_cols; ++c)
         {
-            if (m_grid[r][c] != EMPTY)           // 如果这个位置应该有方块
-            {
-                m_grid[r][c] = remaining[idx++]; // 放入打乱后的新类型
-            }
+            if (m_grid[r][c] != EMPTY)
+                m_grid[r][c] = remaining[idx++];
         }
     }
-    // 重排后棋盘上还是同样的空位，但方块图案被重新分配了
+}
+
+// ============================================================================
+// serializeGrid() —— 棋盘数据序列化
+//
+// 把 totalRows × totalCols 的二维网格展平成一维整数数组。
+// 包含边界（因为存档要完整恢复棋盘状态）。
+// 返回值可直接存入 QSettings。
+// ============================================================================
+QVector<int> GameBoard::serializeGrid() const
+{
+    int tr = totalRows();
+    int tc = totalCols();
+    QVector<int> data;
+    data.reserve(tr * tc + 4);
+
+    // 前4个元素存储棋盘尺寸信息，恢复时用
+    data.append(m_rows);
+    data.append(m_cols);
+    data.append(m_tileTypes);
+    data.append(m_copiesPerType);
+
+    for (int r = 0; r < tr; ++r)
+        for (int c = 0; c < tc; ++c)
+            data.append(m_grid[r][c]);
+
+    return data;
+}
+
+// ============================================================================
+// deserializeGrid() —— 从序列化数据恢复棋盘
+//
+// 从 serializeGrid() 导出的数据重建整个网格。
+// 注意：不恢复分数/步数/连击，那些由 GameWidget/MainWindow 管理。
+// ============================================================================
+void GameBoard::deserializeGrid(const QVector<int>& data)
+{
+    if (data.size() < 4) return;
+
+    // 读取棋盘参数
+    m_rows = data[0];
+    m_cols = data[1];
+    m_tileTypes = data[2];
+    m_copiesPerType = data[3];
+
+    int tr = totalRows();
+    int tc = totalCols();
+
+    // 重新分配网格
+    m_grid.clear();
+    m_grid.resize(tr);
+    for (int r = 0; r < tr; ++r)
+        m_grid[r].resize(tc);
+
+    // 填充数据
+    int idx = 4;
+    for (int r = 0; r < tr; ++r)
+        for (int c = 0; c < tc; ++c)
+            m_grid[r][c] = (idx < data.size()) ? data[idx++] : EMPTY;
+
+    // 重新计算剩余方块数
+    m_remainingTiles = 0;
+    for (int r = 1; r <= m_rows; ++r)
+        for (int c = 1; c <= m_cols; ++c)
+            if (m_grid[r][c] != EMPTY)
+                m_remainingTiles++;
 }

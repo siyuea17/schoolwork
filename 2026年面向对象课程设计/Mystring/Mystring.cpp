@@ -28,14 +28,17 @@ MyString::MyString(const char* ch) :len(0), str(new char[1] {'\0'})
 
 MyString::MyString(const MyString& ms) :len(ms.len), str(new char[len + 1])
 {
+    if(ms.str == nullptr) {
+        str[0] = '\0';
+        return;
+    }
 	strcpy(str, ms.str);
 }
 
 MyString::MyString(MyString&& ms) :len(ms.len), str(ms.str)
 {
-	delete[] str;
 	ms.len = 0;
-	str = new char[1] {'\0'};
+	ms.str = new char[1] {'\0'};
 }
 
 MyString& MyString::operator=(MyString&& ms)
@@ -84,6 +87,7 @@ istream& operator>>(istream& is, MyString& ms)
 			delete[] buf;
 			buf = newBuf;
 		}
+        buf[pos++] = ch;
 	}
 	buf[pos++] = '\0';
 	ms = buf;
@@ -100,6 +104,7 @@ char& MyString::operator[](int index)
 
 MyString& MyString::operator=(const char* ch)
 {
+	if(ch == str) return *this;
 	if (ch == nullptr) {
 		delete[] str;
 		str = new char[1] {'\0'};
@@ -111,34 +116,36 @@ MyString& MyString::operator=(const char* ch)
 		char* newStr = new char[newLen + 1];
 		strcpy(newStr, ch);
 		len = newLen;
+        delete[] str;
 		str = newStr;
 		return *this;
 	}
 }
 
-MyString& MyString::operator=(MyString& ms)
+MyString& MyString::operator=(const MyString& ms)
 {
-	if (this == &ms) {
-		return *this;
-	}
-	else {
-		char* newStr = new char[ms.len + 1];
+	if (this == &ms) return *this;
+	
+	char* newStr = new char[ms.len + 1];
+	if (ms.str != nullptr) {
 		strcpy(newStr, ms.str);
-		delete[] str;
-		strcpy(str, newStr);
-		len = ms.len;
-		return *this;
+	} else {
+		newStr[0] = '\0';
 	}
+	delete[] str;
+	str = newStr;
+	len = ms.len;
+	return *this;
+	
 }
 
-MyString MyString::operator+(MyString& ms)
+MyString MyString::operator+(const MyString& ms)
 {
-	int newLen = len + ms.len;
-	char* newStr = new char[newLen + 1];
-	strcpy(newStr, str);
-	strcat(newStr, ms.str);
-	delete[] newStr;
-	MyString res(newStr);
+	MyString res;
+	res.len = len + ms.len;
+	res.str = new char[res.len + 1]{'\0'};
+	strcpy(res.str, str);
+	strcat(res.str, ms.str);
 	return res;
 }
 
@@ -173,7 +180,7 @@ long MyString::GetLength() const
 MyString MyString::substr(int pos, int n)
 {
 	if (pos < 0 || pos >= len || n == 0) return MyString();
-	int actualN = (pos + n > len) ? (len - pos) : pos + n;
+	int actualN = (pos + n > len) ? (len - pos) : n;
 	char* buf = new char[actualN + 1];
 	strncpy(buf, str + pos, actualN);
 	buf[actualN] = '\0';
@@ -195,7 +202,7 @@ MyString MyString::replace(const MyString& ms1, const MyString& ms2)
 
 int MyString::find(const MyString& ms)
 {
-	if (len == 0) return 0;
+	if (len == 0) return -1;
 	char* found = strstr(str, ms.str);
 	if (found == nullptr) return -1;
 	return found - str;
@@ -265,6 +272,3 @@ bool MyString::Save(const char* fileName)
 		return false;
 	}
 }
-
-
-

@@ -1,0 +1,18 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "lianliankan",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}\\连连看\\x64\\Debug\\连连看.exe",
+            "cwd": "${workspaceFolder}\\连连看\\x64\\Debug",
+            "environment": [
+                {
+                    "name": "PATH",
+                    "value": "C:\\Qt\\6.11.1\\msvc2022_64\\bin;${env:PATH}"
+                }
+            ]
+        }
+    ]
+}
