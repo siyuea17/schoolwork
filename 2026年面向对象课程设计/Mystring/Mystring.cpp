@@ -1,4 +1,4 @@
-
+#define _CRT_SECURE_NO_WARNINGS
 
 #include "MyString.h"
 
@@ -10,7 +10,7 @@
 #include <stdexcept> // std::out_of_range
 
 
-// ====================���캯������������=========================
+// ====================���캯������������=========================
 
 MyString::MyString() :len(0), str(new char[1] {'\0'})
 {
@@ -60,7 +60,7 @@ MyString::~MyString()
 
 //====================================================================
 
-//===========================���������================================
+//===========================���������================================
 
 ostream& operator<<(ostream& os, MyString& ms)
 {
@@ -150,7 +150,7 @@ MyString MyString::operator+(const MyString& ms)
 }
 
 
-//==========================���رȽ������=================================
+//==========================���رȽ������=================================
 bool MyString::operator>(const MyString& ms)
 {
 	return strcmp(str, ms.str) > 0;
@@ -196,8 +196,45 @@ MyString MyString::substr(int pos)
 
 MyString MyString::replace(const MyString& ms1, const MyString& ms2)
 {
+	// 边界检查：ms1 为空或比当前串长，无法替换
+	if (ms1.len == 0 || ms1.len > len || str == nullptr || ms1.str == nullptr)
+		return MyString(*this);
 
-	return MyString();
+	// 第1步：统计 ms1 出现的次数
+	int count = 0;
+	int searchPos = 0;
+	while (searchPos <= len - ms1.len) {
+		if (strncmp(str + searchPos, ms1.str, ms1.len) == 0) {
+			count++;
+			searchPos += ms1.len;  // 跳过已匹配部分，避免 ms2 包含 ms1 时死循环
+		} else {
+			searchPos++;
+		}
+	}
+
+	if (count == 0)
+		return MyString(*this);  // 没找到，返回拷贝
+
+	// 第2步：分配新内存，长度 = 原长 + 次数×(ms2长 - ms1长)
+	int newLen = len + count * (ms2.len - ms1.len);
+	char* newStr = new char[newLen + 1];
+
+	// 第3步：逐字符拷贝，遇到匹配就插入 ms2 跳过 ms1
+	int src = 0, dst = 0;
+	while (src < len) {
+		if (src <= len - ms1.len && strncmp(str + src, ms1.str, ms1.len) == 0) {
+			memcpy(newStr + dst, ms2.str, ms2.len);
+			dst += ms2.len;
+			src += ms1.len;
+		} else {
+			newStr[dst++] = str[src++];
+		}
+	}
+	newStr[dst] = '\0';
+
+	MyString result(newStr);
+	delete[] newStr;
+	return result;
 }
 
 int MyString::find(const MyString& ms)
