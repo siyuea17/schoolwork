@@ -1,4 +1,4 @@
-#define _CRT_SECURE_NO_WARNINGS
+﻿#define _CRT_SECURE_NO_WARNINGS
 
 #include "MyString.h"
 
@@ -10,7 +10,7 @@
 #include <stdexcept> // std::out_of_range
 
 
-// ====================���캯������������=========================
+// ====================构造函数=========================
 
 MyString::MyString() :len(0), str(new char[1] {'\0'})
 {
@@ -60,7 +60,7 @@ MyString::~MyString()
 
 //====================================================================
 
-//===========================���������================================
+//===========================运算符重载================================
 
 ostream& operator<<(ostream& os, MyString& ms)
 {
@@ -150,7 +150,7 @@ MyString MyString::operator+(const MyString& ms)
 }
 
 
-//==========================���رȽ������=================================
+//==========================比较运算符=================================
 bool MyString::operator>(const MyString& ms)
 {
 	return strcmp(str, ms.str) > 0;
@@ -213,7 +213,7 @@ MyString MyString::replace(const MyString& ms1, const MyString& ms2)
 	}
 
 	if (count == 0)
-		return MyString(*this);  // 没找到，返回拷贝
+		return MyString(*this);  // 没有找到 ms1，返回原串
 
 	// 第2步：分配新内存，长度 = 原长 + 次数×(ms2长 - ms1长)
 	int newLen = len + count * (ms2.len - ms1.len);

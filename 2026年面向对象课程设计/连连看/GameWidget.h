@@ -120,7 +120,7 @@ private:
     // ---- 棋盘数据 ----
     GameBoard m_board;
 
-    // ---- 方块图片 ----
+    // ---- 方块图片 ----   
     QVector<QPixmap> m_tilePixmaps;
 
     // ---- 设置 ----

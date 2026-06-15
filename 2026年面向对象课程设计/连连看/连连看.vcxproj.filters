@@ -71,4 +71,18 @@
   <ItemGroup>
     <None Include="ClassDiagram.cd" />
   </ItemGroup>
+  <ItemGroup>
+    <Media Include="bgm.wav">
+      <Filter>资源文件</Filter>
+    </Media>
+    <Media Include="hint.wav">
+      <Filter>资源文件</Filter>
+    </Media>
+    <Media Include="match.wav">
+      <Filter>资源文件</Filter>
+    </Media>
+    <Media Include="win.wav">
+      <Filter>资源文件</Filter>
+    </Media>
+  </ItemGroup>
 </Project>

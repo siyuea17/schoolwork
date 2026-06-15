@@ -78,11 +78,11 @@ SettingsDialog::SettingsDialog(const GameSettings& current, QWidget* parent)
     QVBoxLayout* diffLayout = new QVBoxLayout(diffGroup);
 
     m_difficultyCombo = new QComboBox(this);
-    m_difficultyCombo->addItem(QString::fromUtf8("简单 — 图案种类少，容易找到配对"),
+    m_difficultyCombo->addItem(QString::fromUtf8("简单 — 6×8棋盘，48方块，8种图案"),
                                 static_cast<int>(Difficulty::Easy));
-    m_difficultyCombo->addItem(QString::fromUtf8("中等 — 标准难度，20种图案"),
+    m_difficultyCombo->addItem(QString::fromUtf8("中等 — 10×10棋盘，100方块，20种图案"),
                                 static_cast<int>(Difficulty::Normal));
-    m_difficultyCombo->addItem(QString::fromUtf8("困难 — 图案种类多，考验眼力！"),
+    m_difficultyCombo->addItem(QString::fromUtf8("困难 — 12×14棋盘，168方块，28种图案"),
                                 static_cast<int>(Difficulty::Hard));
 
     int diffIdx = m_difficultyCombo->findData(

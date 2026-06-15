@@ -1,7 +1,4 @@
-
-
-#include "Mystring.h"
-
+ï»¿#include "Mystring.h"
 #include <iostream>
 
 using namespace std;
@@ -9,16 +6,16 @@ using namespace std;
 int main()
 {
 	MyString s1("Hello");
-	MyString s2 = s1; // ¸´ÖÆ¹¹Ôì
+	MyString s2 = s1; // å¤åˆ¶æ„é€ 
 	MyString s3; 
-	s3 = s1; // ¸´ÖÆ¸³Öµ
-	MyString s4 = std::move(s1); // ÒÆ¶¯¹¹Ôì
+	s3 = s1; // å¤åˆ¶èµ‹å€¼
+	MyString s4 = std::move(s1); // ç§»åŠ¨æ„é€ 
 	MyString s5;
-	s5 = std::move(s2); // ÒÆ¶¯¸³Öµ
-	cout << "s1: " << s1 << endl; // s1 ÒÑ±»ÒÆ¶¯£¬Ó¦¸ÃÊÇ¿Õ×Ö·û´®
-	cout << "s2: " << s2 << endl; // s2 ÒÑ±»ÒÆ¶¯£¬Ó¦¸ÃÊÇ¿Õ×Ö·û´®
-	cout << "s3: " << s3 << endl; // s3 Ó¦¸ÃÊÇ "Hello"
-	cout << "s4: " << s4 << endl; // s4 Ó¦¸ÃÊÇ "Hello"
-	cout << "s5: " << s5 << endl; // s5 Ó¦¸ÃÊÇ "Hello"
+	s5 = std::move(s2); // ç§»åŠ¨èµ‹å€¼
+	cout << "s1: " << s1 << endl; // s1 å·²è¢«ç§»åŠ¨ï¼Œåº”è¯¥æ˜¯ç©ºå­—ç¬¦ä¸²
+	cout << "s2: " << s2 << endl; // s2 å·²è¢«ç§»åŠ¨ï¼Œåº”è¯¥æ˜¯ç©ºå­—ç¬¦ä¸²
+	cout << "s3: " << s3 << endl; // s3 åº”è¯¥æ˜¯ "Hello"
+	cout << "s4: " << s4 << endl; // s4 åº”è¯¥æ˜¯ "Hello"
+	cout << "s5: " << s5 << endl; // s5 åº”è¯¥æ˜¯ "Hello"
 	return 0;
 }

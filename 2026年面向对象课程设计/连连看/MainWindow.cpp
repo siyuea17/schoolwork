@@ -271,7 +271,7 @@ void MainWindow::onContinueGame()
     }
 
     m_gameWidget = new GameWidget(state.rows, state.cols,
-                                  state.tileTypes, dp.copies,
+                                  state.tileTypes, state.copies,
                                   m_settings.iconScale, this);
 
     // 替换堆叠窗口第1页
@@ -353,11 +353,9 @@ void MainWindow::onNewGame()
         m_gameWidget = nullptr;
     }
 
-    // 创建新游戏画布
-    m_gameWidget = new GameWidget(GameBoard::DEFAULT_ROWS,
-                                  GameBoard::DEFAULT_COLS,
-                                  dp.tileTypes,
-                                  dp.copies,
+    // 创建新游戏画布（棋盘尺寸、图案种类均按难度参数）
+    m_gameWidget = new GameWidget(dp.rows, dp.cols,
+                                  dp.tileTypes, dp.copies,
                                   m_settings.iconScale, this);
 
     // 替换堆叠窗口第1页

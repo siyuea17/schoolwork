@@ -2,17 +2,48 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "lianliankan",
+            "name": "连连看: 编译并调试",
             "type": "cppvsdbg",
             "request": "launch",
-            "program": "${workspaceFolder}\\连连看\\x64\\Debug\\连连看.exe",
-            "cwd": "${workspaceFolder}\\连连看\\x64\\Debug",
+            "program": "${workspaceFolder}/连连看/x64/Debug/连连看.exe",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}/连连看",
             "environment": [
                 {
                     "name": "PATH",
                     "value": "C:\\Qt\\6.11.1\\msvc2022_64\\bin;${env:PATH}"
                 }
-            ]
+            ],
+            "console": "integratedTerminal",
+            "preLaunchTask": "VS: 编译 Debug x64"
+        },
+        {
+            "name": "连连看: 直接调试 (跳过编译)",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/连连看/x64/Debug/连连看.exe",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}/连连看",
+            "environment": [
+                {
+                    "name": "PATH",
+                    "value": "C:\\Qt\\6.11.1\\msvc2022_64\\bin;${env:PATH}"
+                }
+            ],
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "MyString: 编译并调试",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/Mystring/x64/Debug/Mystring.exe",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}/Mystring",
+            "console": "integratedTerminal",
+            "preLaunchTask": "VS: 编译 Debug x64 (MyString)"
         }
     ]
 }

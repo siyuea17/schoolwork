@@ -326,8 +326,14 @@ void GameWidget::deserializeBoard(const QVector<int>& data)
 // ============================================================================
 // computeLayout() —— 计算方块的像素布局
 //
-// 考虑了 iconScale（图标缩放比例）:
-//   m_tileSize 按缩放比例调整
+// 自适应算法：
+//   1. 根据可用空间和棋盘尺寸计算基础 tile 大小
+//   2. 应用 iconScale 缩放比例
+//   3. 如果缩放后超出可用空间，自动缩回（保证不溢出）
+//   4. 确保 tile 不小于 24px（太小无法点击），不小于可用空间约束
+//
+// 这样无论棋盘多大（Easy 6×8 → Hard 12×14）、图标缩放多少
+// （80% → 120%），都能正常显示。
 // ============================================================================
 void GameWidget::computeLayout()
 {
@@ -335,22 +341,29 @@ void GameWidget::computeLayout()
     double availW = width() - 2.0 * MARGIN;
     double availH = height() - 2.0 * MARGIN;
 
-    double tileW = availW / m_board.totalCols();
-    double tileH = availH / m_board.totalRows();
+    // 第1步：计算基础 tile 大小（不缩放，刚好填满可用空间）
+    double baseTileW = availW / m_board.totalCols();
+    double baseTileH = availH / m_board.totalRows();
+    double baseTile = qMin(baseTileW, baseTileH);
 
-    m_tileSize = qMin(tileW, tileH) * scale;
+    // 第2步：应用缩放
+    m_tileSize = baseTile * scale;
 
-    // 放大后如果超过可用空间，缩回来保证不溢出
+    // 第3步：缩放后如果超标，回退到刚好填满
     double boardW = m_tileSize * m_board.totalCols();
     double boardH = m_tileSize * m_board.totalRows();
-    if (boardW > availW) {
-        m_tileSize = availW / m_board.totalCols();
-        boardH = m_tileSize * m_board.totalRows();
-    }
-    if (boardH > availH) {
-        m_tileSize = availH / m_board.totalRows();
+    if (boardW > availW || boardH > availH) {
+        // 取宽度和高度约束中更紧的那个
+        m_tileSize = qMin(availW / m_board.totalCols(),
+                          availH / m_board.totalRows());
     }
 
+    // 第4步：安全下限——确保 tile 不会太小
+    constexpr double MIN_TILE = 24.0;
+    if (m_tileSize < MIN_TILE)
+        m_tileSize = MIN_TILE;
+
+    // 计算棋盘居中偏移
     m_offsetX = (width() - m_tileSize * m_board.totalCols()) / 2.0;
     m_offsetY = (height() - m_tileSize * m_board.totalRows()) / 2.0;
 }

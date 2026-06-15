@@ -3,26 +3,33 @@
   <Class Name="GameBoard">
     <Position X="1" Y="0.5" Width="4.5" />
     <TypeIdentifier>
-      <HashCode>iAIRgAIEAACABAAAASAAQgAigAEgCgCAAqFACAEUQAA=</HashCode>
+      <HashCode>iAMRgAIEQIgADAAAASBEAgCKoBGmCjCAgoEACAEUcBA=</HashCode>
       <FileName>GameBoard.h</FileName>
     </TypeIdentifier>
   </Class>
   <Class Name="MainWindow">
-    <Position X="1" Y="8.25" Width="4.5" />
+    <Position X="11" Y="2" Width="4.5" />
     <TypeIdentifier>
-      <HashCode>AAAAAAAiAAABEAIAgAAEgAABAhAAAAAAAAAAAACAkAA=</HashCode>
+      <HashCode>AACAAEAiAECBsgIwgEAEgAGFAhAigIAAAAACAECCkCA=</HashCode>
       <FileName>MainWindow.h</FileName>
     </TypeIdentifier>
   </Class>
   <Class Name="GameWidget">
     <Position X="6.25" Y="0.5" Width="4.25" />
+    <NestedTypes>
+      <Struct Name="GameWidget::ComboEffect" Collapsed="true">
+        <TypeIdentifier>
+          <NewMemberFileName>GameWidget.h</NewMemberFileName>
+        </TypeIdentifier>
+      </Struct>
+    </NestedTypes>
     <TypeIdentifier>
-      <HashCode>ICQCECQAAQBwBgAAJAiBEYACCADwIQaJIAUFAAAQQAE=</HashCode>
+      <HashCode>KCQCEDYAAYBwRghgpAjVEYALSCDwJQaNMAcFAAE8QAE=</HashCode>
       <FileName>GameWidget.h</FileName>
     </TypeIdentifier>
   </Class>
   <Struct Name="PathInfo">
-    <Position X="6.25" Y="11.25" Width="4.25" />
+    <Position X="11" Y="0.5" Width="4.25" />
     <TypeIdentifier>
       <HashCode>AAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAQ=</HashCode>
       <FileName>GameBoard.h</FileName>

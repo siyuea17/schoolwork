@@ -1,79 +1,84 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<UI version="4.0" >
+<ui version="4.0">
  <class>MainWindowClass</class>
- <widget class="QMainWindow" name="MainWindowClass" >
-  <property name="objectName" >
-   <string notr="true">MainWindowClass</string>
-  </property>
-  <property name="geometry" >
+ <widget class="QMainWindow" name="MainWindowClass">
+  <property name="geometry">
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>880</width>
-    <height>700</height>
+    <width>960</width>
+    <height>740</height>
    </rect>
   </property>
-  <property name="windowTitle" >
+  <property name="windowTitle">
    <string>连连看</string>
   </property>
-  <widget class="QMenuBar" name="menuBar" />
-  <widget class="QToolBar" name="mainToolBar" >
-   <property name="windowTitle" >
+  <widget class="QWidget" name="centralWidget"/>
+  <widget class="QMenuBar" name="menuBar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>880</width>
+     <height>33</height>
+    </rect>
+   </property>
+  </widget>
+  <widget class="QToolBar" name="mainToolBar">
+   <property name="windowTitle">
     <string>工具栏</string>
    </property>
-   <attribute name="toolBarArea" >
+   <attribute name="toolBarArea">
     <enum>TopToolBarArea</enum>
    </attribute>
-   <attribute name="toolBarBreak" >
+   <attribute name="toolBarBreak">
     <bool>false</bool>
    </attribute>
-   <addaction name="homeAction" />
-   <addaction name="separator" />
-   <addaction name="newGameAction" />
-   <addaction name="separator2" />
-   <addaction name="hintAction" />
+   <addaction name="homeAction"/>
+   <addaction name="separator"/>
+   <addaction name="newGameAction"/>
+   <addaction name="separator2"/>
+   <addaction name="hintAction"/>
   </widget>
-  <widget class="QWidget" name="centralWidget" />
-  <widget class="QStatusBar" name="statusBar" />
-  <action name="homeAction" >
-   <property name="text" >
+  <widget class="QStatusBar" name="statusBar"/>
+  <action name="homeAction">
+   <property name="text">
     <string>返回</string>
    </property>
-   <property name="toolTip" >
+   <property name="toolTip">
     <string>返回主菜单</string>
    </property>
   </action>
-  <action name="newGameAction" >
-   <property name="text" >
+  <action name="newGameAction">
+   <property name="text">
     <string>新游戏</string>
    </property>
-   <property name="toolTip" >
+   <property name="toolTip">
     <string>开始一局新游戏</string>
    </property>
   </action>
-  <action name="hintAction" >
-   <property name="text" >
+  <action name="hintAction">
+   <property name="text">
     <string>提示</string>
    </property>
-   <property name="toolTip" >
+   <property name="toolTip">
     <string>高亮一对可消除的方块</string>
    </property>
   </action>
-  <action name="separator" >
-   <property name="separator" >
+  <action name="separator">
+   <property name="separator" stdset="0">
     <bool>true</bool>
    </property>
   </action>
-  <action name="separator2" >
-   <property name="separator" >
+  <action name="separator2">
+   <property name="separator" stdset="0">
     <bool>true</bool>
    </property>
   </action>
  </widget>
- <layoutDefault spacing="6" margin="11" />
- <pixmapfunction></pixmapfunction>
+ <layoutdefault spacing="6" margin="11"/>
  <resources>
-   <include location="resources.qrc"/>
+  <include location="resources.qrc"/>
  </resources>
  <connections/>
-</UI>
+</ui>

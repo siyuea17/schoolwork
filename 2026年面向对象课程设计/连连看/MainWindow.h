@@ -71,7 +71,7 @@ private:
     GameWidget* m_gameWidget;       // 游戏画布（第1页）——每次新游戏重建
 
     // 状态栏标签
-    QLabel* m_scoreLabel;
+    QLabel* m_scoreLabel;   
     QLabel* m_timerLabel;
     QLabel* m_remainingLabel;
     QLabel* m_movesLabel;

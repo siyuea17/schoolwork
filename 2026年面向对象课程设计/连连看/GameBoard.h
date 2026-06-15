@@ -58,10 +58,10 @@ public:
     // ======================== 常量 ========================
     // 注意：ROWS/COLS 现在是构造时动态设置的，但保留默认值以便兼容
 
-    static constexpr int DEFAULT_ROWS = 8;
+    static constexpr int DEFAULT_ROWS = 10;
     static constexpr int DEFAULT_COLS = 10;
     static constexpr int DEFAULT_TILE_TYPES = 20;
-    static constexpr int DEFAULT_COPIES = 4;
+    static constexpr int DEFAULT_COPIES = 5;
 
     static constexpr int EMPTY = 0;
 

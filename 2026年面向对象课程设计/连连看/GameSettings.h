@@ -23,9 +23,9 @@
 // 难度枚举
 // ============================================================================
 enum class Difficulty {
-    Easy = 0,      // 简单：10种图案×8个副本=80方块，类型少容易配对
-    Normal = 1,    // 中等：20种图案×4个副本=80方块
-    Hard = 2       // 困难：40种图案×2个副本=80方块，类型多难配对
+    Easy = 0,      // 简单：6×8=48方块，8种图案×6副本，类型少容易配对
+    Normal = 1,    // 中等：10×10=100方块，20种图案×5副本，标准难度
+    Hard = 2       // 困难：12×14=168方块，28种图案×6副本，考验眼力
 };
 
 // ============================================================================
@@ -41,20 +41,32 @@ inline QString difficultyName(Difficulty d) {
 }
 
 // ============================================================================
-// 每种难度对应的方块参数
+// 每种难度对应的棋盘参数
+//
+// 不同难度的总方块数量完全不同，从简单到困难逐级递增：
+//   简单 = 6×8=48方块，棋盘小、类型少，轻松入门
+//   中等 = 10×10=100方块，标准尺寸，适中挑战
+//   困难 = 12×14=168方块，棋盘大、类型多，考验眼力和耐心
+//
+// 设计原则：rows×cols = tileTypes×copies，确保每种图案数量均等配对
 // ============================================================================
 struct DifficultyParams {
+    int rows;        // 游戏区域行数
+    int cols;        // 游戏区域列数
     int tileTypes;   // 图案种类数
     int copies;      // 每种图案的副本数
+
+    // 总方块数 = 行×列 = 种类×副本
+    int totalTiles() const { return rows * cols; }
 };
 
 inline DifficultyParams paramsForDifficulty(Difficulty d) {
     switch (d) {
-        case Difficulty::Easy:   return {10, 8};   // 10种×8个=80
-        case Difficulty::Normal: return {20, 4};   // 20种×4个=80
-        case Difficulty::Hard:   return {40, 2};   // 40种×2个=80
+        case Difficulty::Easy:   return {6, 8,   8,  6};   // 48方块, 8种×6
+        case Difficulty::Normal: return {10, 10, 20, 5};   // 100方块, 20种×5
+        case Difficulty::Hard:   return {12, 14, 28, 6};   // 168方块, 28种×6
     }
-    return {20, 4};
+    return {10, 10, 20, 5};
 }
 
 // ============================================================================
@@ -113,10 +125,10 @@ struct GameSettings {
 // ============================================================================
 struct SavedGameState {
     bool hasSaved = false;    // 是否有存档
-    int rows = 8;             // 棋盘行数
+    int rows = 10;            // 棋盘行数
     int cols = 10;            // 棋盘列数
     int tileTypes = 20;       // 图案种类
-    int copies = 4;           // 每类副本
+    int copies = 5;           // 每类副本
     int score = 0;            // 分数
     int moves = 0;            // 步数
     int remainingTiles = 0;   // 剩余方块
@@ -183,10 +195,10 @@ public:
         state.hasSaved = obj["hasSaved"].toBool(false);
         if (!state.hasSaved) return state;
 
-        state.rows = obj["rows"].toInt(8);
+        state.rows = obj["rows"].toInt(10);
         state.cols = obj["cols"].toInt(10);
         state.tileTypes = obj["tileTypes"].toInt(20);
-        state.copies = obj["copies"].toInt(4);
+        state.copies = obj["copies"].toInt(5);
         state.score = obj["score"].toInt(0);
         state.moves = obj["moves"].toInt(0);
         state.remainingTiles = obj["remainingTiles"].toInt(0);
