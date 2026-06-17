@@ -209,7 +209,7 @@ void MainWindow::createStatusBar()
     m_timerLabel->setStyleSheet("font-size: 13px; padding: 0 8px;");
     sb->addWidget(m_timerLabel);
 
-    m_remainingLabel = new QLabel(QString::fromUtf8("剩余: 80"));
+    m_remainingLabel = new QLabel(QString::fromUtf8("剩余: 0"));
     m_remainingLabel->setMinimumWidth(100);
     m_remainingLabel->setStyleSheet("font-size: 13px; padding: 0 8px;");
     sb->addWidget(m_remainingLabel);

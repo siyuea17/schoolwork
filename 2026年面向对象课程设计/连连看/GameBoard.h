@@ -41,7 +41,7 @@ struct PathInfo
 // 这个类管理一个"带边界的棋盘"。
 // 为什么需要边界？因为连连看允许通过棋盘外部的空白区域连接！
 //
-// 棋盘布局示意（以标准 8×10 为例，加上边界变成 10×12）：
+// 棋盘布局示意（以中等 8×10 为例，加上边界变成 10×12）：
 //
 //     列:  0   1   2   ...  10  11
 //   行0:  [空][空][空] ... [空][空]   ← 上边界
@@ -58,10 +58,10 @@ public:
     // ======================== 常量 ========================
     // 注意：ROWS/COLS 现在是构造时动态设置的，但保留默认值以便兼容
 
-    static constexpr int DEFAULT_ROWS = 10;
+    static constexpr int DEFAULT_ROWS = 8;
     static constexpr int DEFAULT_COLS = 10;
     static constexpr int DEFAULT_TILE_TYPES = 20;
-    static constexpr int DEFAULT_COPIES = 5;
+    static constexpr int DEFAULT_COPIES = 4;
 
     static constexpr int EMPTY = 0;
 

@@ -24,7 +24,7 @@
 // ============================================================================
 enum class Difficulty {
     Easy = 0,      // 简单：6×8=48方块，8种图案×6副本，类型少容易配对
-    Normal = 1,    // 中等：10×10=100方块，20种图案×5副本，标准难度
+    Normal = 1,    // 中等：8×10=80方块，20种图案×4副本，标准难度
     Hard = 2       // 困难：12×14=168方块，28种图案×6副本，考验眼力
 };
 
@@ -45,7 +45,7 @@ inline QString difficultyName(Difficulty d) {
 //
 // 不同难度的总方块数量完全不同，从简单到困难逐级递增：
 //   简单 = 6×8=48方块，棋盘小、类型少，轻松入门
-//   中等 = 10×10=100方块，标准尺寸，适中挑战
+//   中等 = 8×10=80方块，标准尺寸，适中挑战
 //   困难 = 12×14=168方块，棋盘大、类型多，考验眼力和耐心
 //
 // 设计原则：rows×cols = tileTypes×copies，确保每种图案数量均等配对
@@ -63,10 +63,10 @@ struct DifficultyParams {
 inline DifficultyParams paramsForDifficulty(Difficulty d) {
     switch (d) {
         case Difficulty::Easy:   return {6, 8,   8,  6};   // 48方块, 8种×6
-        case Difficulty::Normal: return {10, 10, 20, 5};   // 100方块, 20种×5
+        case Difficulty::Normal: return {8, 10, 20, 4};   // 80方块, 20种×4
         case Difficulty::Hard:   return {12, 14, 28, 6};   // 168方块, 28种×6
     }
-    return {10, 10, 20, 5};
+    return {8, 10, 20, 4};
 }
 
 // ============================================================================
@@ -125,10 +125,10 @@ struct GameSettings {
 // ============================================================================
 struct SavedGameState {
     bool hasSaved = false;    // 是否有存档
-    int rows = 10;            // 棋盘行数
+    int rows = 8;             // 棋盘行数
     int cols = 10;            // 棋盘列数
     int tileTypes = 20;       // 图案种类
-    int copies = 5;           // 每类副本
+    int copies = 4;           // 每类副本
     int score = 0;            // 分数
     int moves = 0;            // 步数
     int remainingTiles = 0;   // 剩余方块
@@ -195,10 +195,10 @@ public:
         state.hasSaved = obj["hasSaved"].toBool(false);
         if (!state.hasSaved) return state;
 
-        state.rows = obj["rows"].toInt(10);
+        state.rows = obj["rows"].toInt(8);
         state.cols = obj["cols"].toInt(10);
         state.tileTypes = obj["tileTypes"].toInt(20);
-        state.copies = obj["copies"].toInt(5);
+        state.copies = obj["copies"].toInt(4);
         state.score = obj["score"].toInt(0);
         state.moves = obj["moves"].toInt(0);
         state.remainingTiles = obj["remainingTiles"].toInt(0);
