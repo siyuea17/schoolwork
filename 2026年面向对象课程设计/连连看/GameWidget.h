@@ -111,9 +111,6 @@ private:
     // ======================== 资源加载 ========================
     void loadTileImages();
 
-    // 当 tileTypes > 已有图片数时，通过色相旋转生成额外图案
-    QPixmap generateHueRotatedTile(const QPixmap& source, int hueShift);
-
     // ======================== 提示控制 ========================
 
 private:
