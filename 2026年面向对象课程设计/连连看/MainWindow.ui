@@ -35,9 +35,7 @@
     <bool>false</bool>
    </attribute>
    <addaction name="homeAction"/>
-   <addaction name="separator"/>
    <addaction name="newGameAction"/>
-   <addaction name="separator2"/>
    <addaction name="hintAction"/>
   </widget>
   <widget class="QStatusBar" name="statusBar"/>
@@ -63,16 +61,6 @@
    </property>
    <property name="toolTip">
     <string>高亮一对可消除的方块</string>
-   </property>
-  </action>
-  <action name="separator">
-   <property name="separator" stdset="0">
-    <bool>true</bool>
-   </property>
-  </action>
-  <action name="separator2">
-   <property name="separator" stdset="0">
-    <bool>true</bool>
    </property>
   </action>
  </widget>
