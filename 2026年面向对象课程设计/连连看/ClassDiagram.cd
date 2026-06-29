@@ -16,15 +16,18 @@
   </Class>
   <Class Name="GameWidget">
     <Position X="6.25" Y="0.5" Width="4.25" />
+    <Compartments>
+      <Compartment Name="Nested Types" Collapsed="false" />
+    </Compartments>
     <NestedTypes>
-      <Struct Name="GameWidget::ComboEffect" Collapsed="true">
+      <Struct Name="GameWidget::ComboEffect">
         <TypeIdentifier>
           <NewMemberFileName>GameWidget.h</NewMemberFileName>
         </TypeIdentifier>
       </Struct>
     </NestedTypes>
     <TypeIdentifier>
-      <HashCode>KCQCEDYAAYBwRghgpAjVEYALSCDwJQaNMAcFAAE8QAE=</HashCode>
+      <HashCode>KCQCEDYAAYBwRgggpAjVEYALSCDwJQaNMAcFAAE8QAE=</HashCode>
       <FileName>GameWidget.h</FileName>
     </TypeIdentifier>
   </Class>

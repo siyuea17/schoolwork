@@ -9,6 +9,9 @@
 #include <cctype>    // tolower
 #include <stdexcept> // std::out_of_range
 
+#include <string>
+#include <sstream>
+
 
 // ====================构造函数=========================
 
@@ -62,7 +65,7 @@ MyString::~MyString()
 
 //===========================运算符重载================================
 
-ostream& operator<<(ostream& os, MyString& ms)
+ostream& operator<<(ostream& os, const MyString& ms)
 {
 	os << (ms.str ? ms.str : "");
 	return os;
@@ -151,33 +154,33 @@ MyString MyString::operator+(const MyString& ms)
 
 
 //==========================比较运算符=================================
-bool MyString::operator>(const MyString& ms)
+bool MyString::operator>(const MyString& ms) const
 {
 	return strcmp(str, ms.str) > 0;
 }
 
-bool MyString::operator<(const MyString& ms)
+bool MyString::operator<(const MyString& ms) const
 {
 	return strcmp(str, ms.str) < 0;
 }
 
-bool MyString::operator==(const MyString& ms)
+bool MyString::operator==(const MyString& ms) const
 {
 	return strcmp(str, ms.str) == 0;
 }
 
-bool MyString::operator!=(const MyString& ms)
+bool MyString::operator!=(const MyString& ms) const
 {
 	return strcmp(str, ms.str) != 0;
 }
 
-//========================================================================
+//==========================比较运算符=================================
 long MyString::GetLength() const
 {
 	return static_cast<long>(len);
 }
 
-MyString MyString::substr(int pos, int n)
+MyString MyString::substr(int pos, int n) const
 {
 	if (pos < 0 || pos >= len || n == 0) return MyString();
 	int actualN = (pos + n > len) ? (len - pos) : n;
@@ -189,12 +192,12 @@ MyString MyString::substr(int pos, int n)
 	return res;
 }
 
-MyString MyString::substr(int pos)
+MyString MyString::substr(int pos) const
 {
 	return this->substr(pos, len);
 }
 
-MyString MyString::replace(const MyString& ms1, const MyString& ms2)
+MyString MyString::replace(const MyString& ms1, const MyString& ms2) const
 {
 	// 边界检查：ms1 为空或比当前串长，无法替换
 	if (ms1.len == 0 || ms1.len > len || str == nullptr || ms1.str == nullptr)
@@ -237,7 +240,7 @@ MyString MyString::replace(const MyString& ms1, const MyString& ms2)
 	return result;
 }
 
-int MyString::find(const MyString& ms)
+int MyString::find(const MyString& ms) const
 {
 	if (len == 0) return -1;
 	char* found = strstr(str, ms.str);
@@ -245,7 +248,7 @@ int MyString::find(const MyString& ms)
 	return found - str;
 }
 
-bool MyString::equalsIgnoreCase(const MyString& ms)
+bool MyString::equalsIgnoreCase(const MyString& ms) const
 {
 	if (len != ms.len) return false;
 	for (int i = 0; i < len; ++i)
@@ -257,44 +260,43 @@ bool MyString::equalsIgnoreCase(const MyString& ms)
 	return true;
 }
 
-bool MyString::contains(const MyString& ms)
+bool MyString::contains(const MyString& ms) const
 {
 	return find(ms) != -1;
 }
 
-bool MyString::startsWith(const MyString& ms)
+bool MyString::startsWith(const MyString& ms) const
 {
 	if (len < ms.len) return false;
 	return strncmp(str, ms.str, ms.len) == 0;
 }
 
-bool MyString::endsWith(const MyString& ms)
+bool MyString::endsWith(const MyString& ms) const
 {
 	if (len < ms.len) return false;
 	return strcmp(str + len - ms.len, ms.str) == 0;
 }
 
-bool MyString::Load(const char* fileName)
-{
-	try {
-		std::ifstream fin(fileName);
-		fin.seekg(0, std::ios::end);
-		long fileSize = static_cast<long>(fin.tellg());
-		fin.seekg(0, std::ios::beg);
-
-		char* buf = new char[fileSize + 1];
-		fin.read(buf, fileSize);
-		buf[fin.gcount()] = '\0';
-		fin.close();
-		*this = buf;
-		delete[] buf;
-
-		return true;
-	}
-	catch(const std::exception& e) {
-		std::cerr << "Error loading file: " << e.what() << std::endl;
-		return false;
-	}
+bool MyString::Load(const char* fileName) {
+    std::ifstream fin(fileName);
+    if (!fin.is_open()) {
+        std::cerr << "Failed to open file: " << fileName << std::endl;
+        return false;
+    }
+    fin.seekg(0, std::ios::end);
+    long fileSize = static_cast<long>(fin.tellg());
+    if (fileSize < 0) {
+        std::cerr << "Failed to get file size." << std::endl;
+        return false;
+    }
+    fin.seekg(0, std::ios::beg);
+    char* buf = new char[fileSize + 1];
+    fin.read(buf, fileSize);
+    buf[fin.gcount()] = '\0';
+    fin.close();
+    *this = buf;
+    delete[] buf;
+    return true;
 }
 
 bool MyString::Save(const char* fileName)
@@ -308,4 +310,31 @@ bool MyString::Save(const char* fileName)
 		std::cerr << "Error saving file: " << e.what() << std::endl;
 		return false;
 	}
+}
+
+MyString MyString::regexReplace(const MyString& pattern, const MyString& replacement) const {
+    std::string src(str, len);
+    std::string pat(pattern.str, pattern.len);
+    std::string repl(replacement.str, replacement.len);
+
+    std::regex reg;
+    try {
+        reg = std::regex(pat);
+    } catch (const std::regex_error& e) {
+        std::cerr << "Regex compilation failed: " << e.what() << std::endl;
+        throw;
+	}
+
+    std::stringstream ss;
+    size_t lastPos = 0;
+    auto begin = std::sregex_iterator(src.begin(), src.end(), reg);
+    auto end = std::sregex_iterator();
+    for (auto it = begin; it != end; ++it) {
+        const std::smatch& match = *it;
+        ss << src.substr(lastPos, match.position() - lastPos);
+        ss << repl;
+        lastPos = match.position() + match.length();
+    }
+    ss << src.substr(lastPos);
+    return MyString(ss.str().c_str());
 }
