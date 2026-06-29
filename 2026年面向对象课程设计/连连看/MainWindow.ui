@@ -35,6 +35,7 @@
     <bool>false</bool>
    </attribute>
    <addaction name="homeAction"/>
+   <addaction name="pauseAction"/>
    <addaction name="newGameAction"/>
    <addaction name="hintAction"/>
   </widget>
@@ -45,6 +46,14 @@
    </property>
    <property name="toolTip">
     <string>返回主菜单</string>
+   </property>
+  </action>
+  <action name="pauseAction">
+   <property name="text">
+    <string>暂停</string>
+   </property>
+   <property name="toolTip">
+    <string>暂停/继续游戏</string>
    </property>
   </action>
   <action name="newGameAction">
