@@ -1,0 +1,13 @@
+{
+  "_type": "Project",
+  "_id": "AAAAAA9CAE0D31FEFB4FD2",
+  "name": "连连看 UML",
+  "_parent": {
+    "$ref": ""
+  },
+  "ownedElements": [
+    {
+      "$ref": "AAAAAA4A23985B937C42D3"
+    }
+  ]
+}

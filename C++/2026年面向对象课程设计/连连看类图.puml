@@ -1,0 +1,326 @@
+@startuml 连连看类图
+' LianLianKan — 完整类图（PlantUML 格式）
+
+skinparam classAttributeIconSize 0
+skinparam classFontStyle bold
+skinparam backgroundColor #FAFBFC
+skinparam defaultFontName Microsoft YaHei
+
+' ========================= 枚举 =========================
+enum Difficulty {
+    Easy = 0
+    Normal = 1
+    Hard = 2
+}
+
+' ========================= 结构体 =========================
+class DifficultyParams <<struct>> {
+    + rows : int
+    + cols : int
+    + tileTypes : int
+    + copies : int
+    + totalTiles() : int
+}
+
+class GameSettings <<struct>> {
+    + volume : int
+    + iconScale : int
+    + difficulty : Difficulty
+    + highScore : int
+    + save() : void
+    + load() : void
+}
+
+class SavedGameState <<struct>> {
+    + hasSaved : bool
+    + rows : int
+    + cols : int
+    + tileTypes : int
+    + copies : int
+    + score : int
+    + moves : int
+    + remainingTiles : int
+    + comboCount : int
+    + elapsedSeconds : int
+    + difficulty : Difficulty
+    + gridData : QVector<int>
+}
+
+class PathInfo <<struct>> {
+    + valid : bool
+    + corners : QVector<QPoint>
+}
+
+' ========================= 棋盘逻辑层 =========================
+class GameBoard {
+    ' -- static constexpr --
+    {static} + DEFAULT_ROWS : int = 8
+    {static} + DEFAULT_COLS : int = 10
+    {static} + DEFAULT_TILE_TYPES : int = 20
+    {static} + DEFAULT_COPIES : int = 4
+    {static} + EMPTY : int = 0
+    {static} + COMBO_WINDOW_MS : int = 5000
+    ' -- 私有数据成员 --
+    - m_rows : int
+    - m_cols : int
+    - m_tileTypes : int
+    - m_copiesPerType : int
+    - m_grid : QVector<QVector<int>>
+    - m_score : int
+    - m_remainingTiles : int
+    - m_moves : int
+    - m_comboCount : int
+    - m_lastMatchTimeMs : qint64
+    - m_rng : std::mt19937
+    ' -- 构造与初始化 --
+    + GameBoard(rows, cols, tileTypes, copiesPerType)
+    + initBoard() : void
+    + reset() : void
+    ' -- 路径查找 --
+    + findPath(r1, c1, r2, c2) : PathInfo
+    + hasValidMoves() : bool
+    + findHint() : PathInfo
+    + isWin() : bool
+    ' -- 游戏操作 --
+    + removeTiles(r1, c1, r2, c2) : void
+    + shuffle() : void
+    ' -- 连击系统 --
+    + calculateComboScore() : int
+    + resetCombo() : void
+    + getComboCount() : int
+    ' -- 访问器 --
+    + getTile(r, c) : int
+    + setTile(r, c, type) : void
+    + isEmpty(r, c) : bool
+    + getScore() : int
+    + getRemainingTiles() : int
+    + getMoves() : int
+    + addScore(points) : void
+    + rows() : int
+    + cols() : int
+    + totalRows() : int
+    + totalCols() : int
+    + tileTypes() : int
+    + copiesPerType() : int
+    + totalTiles() : int
+    ' -- 序列化 --
+    + serializeGrid() : QVector<int>
+    + deserializeGrid(data) : void
+    + setScore(s) : void
+    + setMoves(m) : void
+    + setRemainingTiles(r) : void
+    + setComboCount(c) : void
+    ' -- 路径查找辅助 --
+    - isRowClear(r, c1, c2) : bool
+    - isColClear(r1, r2, c) : bool
+    - tryDirectLink(r1, c1, r2, c2) : PathInfo
+    - tryOneTurnLink(r1, c1, r2, c2) : PathInfo
+    - tryTwoTurnLink(r1, c1, r2, c2) : PathInfo
+}
+
+' ========================= 游戏画布 =========================
+class GameWidget {
+    ' -- 私有数据成员 --
+    - m_board : GameBoard
+    - m_tilePixmaps : QVector<QPixmap>
+    - m_iconScale : int
+    - m_tileSize : double
+    - m_offsetX : double
+    - m_offsetY : double
+    - m_hasSelection : bool
+    - m_selectedRow : int
+    - m_selectedCol : int
+    - m_isAnimating : bool
+    - m_animPath : PathInfo
+    - m_animColor : QColor
+    - m_showingHint : bool
+    - m_hintRow1 : int
+    - m_hintCol1 : int
+    - m_hintRow2 : int
+    - m_hintCol2 : int
+    - m_hintTimer : QTimer*
+    - m_hintFlashCount : int
+    - m_idleTimer : QTimer*
+    - m_isShuffling : bool
+    - m_showingShuffleMsg : bool
+    - m_shuffleMsgFrames : int
+    - m_comboEffects : QVector<ComboEffect>
+    - m_comboTimer : QTimer*
+    - m_isPaused : bool
+    {static} - MARGIN : int = 15
+    {static} - COMBO_FLOAT_FRAMES : int = 30
+    {static} - IDLE_HINT_DELAY : int = 10000
+    ' -- 嵌套私有结构体 --
+    - <<struct>> ComboEffect
+    .. ComboEffect ..
+    comboCount : int
+    remainingFrames : int
+    startPos : QPointF
+    ' -- 公有方法 --
+    + GameWidget(rows, cols, tileTypes, copiesPerType, iconScale, parent)
+    + ~GameWidget()
+    + startNewGame() : void
+    + showHint() : void
+    + setIconScale(percent) : void
+    + iconScale() : int
+    + setPaused(paused) : void
+    + isPaused() : bool
+    + getScore() : int
+    + getMoves() : int
+    + getComboCount() : int
+    + getRemainingTiles() : int
+    + boardRows() : int
+    + boardCols() : int
+    + boardTileTypes() : int
+    + boardCopiesPerType() : int
+    + serializeBoard() : QVector<int>
+    + deserializeBoard(data) : void
+    + setBoardScore(s) : void
+    + setBoardMoves(m) : void
+    + setBoardRemainingTiles(r) : void
+    + setBoardComboCount(c) : void
+    + computeLayout() : void
+    + clearHintTimer() : void
+    ' -- 受保护虚函数 --
+    # paintEvent(event) : void
+    # mousePressEvent(event) : void
+    # resizeEvent(event) : void
+    ' -- 私有绘制函数 --
+    - drawBackground(painter) : void
+    - drawTile(painter, row, col, type) : void
+    - drawSelection(painter, row, col) : void
+    - drawConnectionPath(painter) : void
+    - drawHintHighlight(painter) : void
+    - drawShuffleMessage(painter) : void
+    - drawComboEffects(painter) : void
+    - drawPauseOverlay(painter) : void
+    - tileRect(row, col) : QRectF
+    - tileCenter(row, col) : QPointF
+    - hitTest(pos, outRow, outCol) : int
+    - tryMatch(row, col) : void
+    - executeMatch(path) : void
+    - finishMatch() : void
+    - checkGameState() : void
+    - shuffleBoard() : void
+    - loadTileImages() : void
+    ' -- 信号 --
+    ~ scoreChanged(newScore)
+    ~ tilesRemainingChanged(remaining)
+    ~ moveCountChanged(moves)
+    ~ gameWon()
+    ~ noMovesLeft()
+    ~ comboCountChanged(comboCount)
+}
+
+' ========================= 主窗口 =========================
+class MainWindow {
+    - ui : Ui::MainWindowClass
+    - m_stack : QStackedWidget*
+    - m_startWidget : StartWidget*
+    - m_gameWidget : GameWidget*
+    - m_scoreLabel : QLabel*
+    - m_timerLabel : QLabel*
+    - m_remainingLabel : QLabel*
+    - m_movesLabel : QLabel*
+    - m_comboLabel : QLabel*
+    - m_gameTimer : QTimer*
+    - m_elapsedSeconds : int
+    - m_bgMusic : QMediaPlayer*
+    - m_audioOutput : QAudioOutput*
+    - m_matchSound : QMediaPlayer*
+    - m_winSound : QMediaPlayer*
+    - m_hintSound : QMediaPlayer*
+    - m_settings : GameSettings
+    - m_isRestoring : bool
+    - m_isPaused : bool
+    ' -- 公有 --
+    + MainWindow(parent)
+    + ~MainWindow()
+    ' -- 受保护 --
+    # closeEvent(event) : void
+    ' -- 私有槽 --
+    - onContinueGame() : void
+    - onNewGame() : void
+    - onOpenSettings() : void
+    - onReturnToMenu() : void
+    - onHint() : void
+    - onPause() : void
+    - onTimerTick() : void
+    - onGameWon() : void
+    - onNoMovesLeft() : void
+    - onComboChanged(comboCount) : void
+    ' -- 私有辅助 --
+    - createStatusBar() : void
+    - connectGameSignals() : void
+    - initMusic() : void
+    - initSoundEffects() : void
+    - findAudioFile(filename) : QString
+    - applySettings() : void
+    - saveGameState() : void
+    - clearSavedGame() : void
+    - pauseGame() : void
+    - resumeGame() : void
+}
+
+' ========================= 开始界面 =========================
+class StartWidget {
+    - m_titleLabel : QLabel*
+    - m_highScoreLabel : QLabel*
+    - m_continueBtn : QPushButton*
+    - m_newGameBtn : QPushButton*
+    - m_settingsBtn : QPushButton*
+    + StartWidget(parent)
+    + refreshContinueButton() : void
+    ~ continueGame()
+    ~ newGame()
+    ~ openSettings()
+}
+
+' ========================= 设置对话框 =========================
+class SettingsDialog {
+    - m_volumeSlider : QSlider*
+    - m_volumeLabel : QLabel*
+    - m_iconSizeCombo : QComboBox*
+    - m_difficultyCombo : QComboBox*
+    - m_difficultyHint : QLabel*
+    + SettingsDialog(current, parent)
+    + getSettings() : GameSettings
+    - onVolumeChanged(value) : void
+}
+
+' ========================= 存档管理器 =========================
+class SaveManager <<static>> {
+    {static} + save(state) : void
+    {static} + load() : SavedGameState
+    {static} + clear() : void
+    {static} + hasSavedGame() : bool
+}
+
+' ========================= Qt 基类 =========================
+class QWidget <<Qt>> {
+}
+class QMainWindow <<Qt>> {
+}
+class QDialog <<Qt>> {
+}
+
+' ========================= 继承关系 =========================
+QWidget <|-- GameWidget
+QWidget <|-- StartWidget
+QMainWindow <|-- MainWindow
+QDialog <|-- SettingsDialog
+
+' ========================= 组合关系 =========================
+GameWidget *-- GameBoard
+MainWindow *-- GameWidget
+MainWindow *-- StartWidget
+
+' ========================= 依赖使用关系 =========================
+GameBoard ..> PathInfo
+MainWindow ..> GameSettings
+SettingsDialog ..> GameSettings
+SaveManager ..> SavedGameState
+SavedGameState ..> Difficulty
+GameSettings ..> Difficulty
+
+@enduml

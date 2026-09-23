@@ -1,0 +1,14 @@
+{
+  "name": "Python 2.7",
+  "image": "python:2.7.18-slim",
+  "workspaceFolder": "/app",
+  "mounts": [
+    "source=${localWorkspaceFolder},target=/app,type=bind,consistency=cached"
+  ],
+  "settings": {
+    "python.pythonPath": "/usr/local/bin/python"
+  },
+  "extensions": [
+    "ms-python.python"
+  ]
+}

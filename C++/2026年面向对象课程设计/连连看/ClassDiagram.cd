@@ -1,0 +1,81 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ClassDiagram MajorVersion="1" MinorVersion="1" MembersFormat="NameAndType">
+  <Class Name="GameBoard" Collapsed="true">
+    <Position X="1" Y="1" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>iAMRgAIEQIgADAAAASBEAgCKoBGmCjCAgoEACAEUcBA=</HashCode>
+      <FileName>GameBoard.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="SaveManager" Collapsed="true">
+    <Position X="1" Y="2" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AEAAAAAAAICAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>GameSettings.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="MainWindow" Collapsed="true">
+    <Position X="4.5" Y="1" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>CACAAkAiAECBsgIwgEAEgAGFAhAigIAAEAACEECCkCA=</HashCode>
+      <FileName>MainWindow.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="GameWidget" Collapsed="true">
+    <Position X="2.75" Y="1" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>KCQCEjYAAYBwRgggpAjVEYALSCDwJwaNMAcFAAE8YAE=</HashCode>
+      <FileName>GameWidget.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="StartWidget" Collapsed="true">
+    <Position X="4.5" Y="2" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AJAAAAgABAAIAAAAAAIAAAAAAAIAAAAAAAQAAAAABAA=</HashCode>
+      <FileName>StartWidget.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="SettingsDialog" Collapsed="true">
+    <Position X="2.75" Y="2" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAIAAAAFgAAAAAAABAAAAAAAAAAAAAAIgA=</HashCode>
+      <FileName>SettingsDialog.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Struct Name="PathInfo" Collapsed="true">
+    <Position X="4.5" Y="3.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAQ=</HashCode>
+      <FileName>GameBoard.h</FileName>
+    </TypeIdentifier>
+  </Struct>
+  <Struct Name="DifficultyParams" Collapsed="true">
+    <Position X="1" Y="3.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAACAAAAABAAAAAABCAAAAEAAAAAAAAAAA=</HashCode>
+      <FileName>GameSettings.h</FileName>
+    </TypeIdentifier>
+  </Struct>
+  <Struct Name="GameSettings" Collapsed="true">
+    <Position X="2.75" Y="3.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAABAICAAAAAAAAAAAAAIAAAAAAAAAAAAAECAAA=</HashCode>
+      <FileName>GameSettings.h</FileName>
+    </TypeIdentifier>
+  </Struct>
+  <Struct Name="SavedGameState" Collapsed="true">
+    <Position X="1" Y="4.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAEAABAAAACAAAAABIAAAAQACAAAKEAAAAAAEAEAA=</HashCode>
+      <FileName>GameSettings.h</FileName>
+    </TypeIdentifier>
+  </Struct>
+  <Enum Name="Difficulty" Collapsed="true">
+    <Position X="1" Y="5.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAACAAAAAAAAAAAAAAAAAIAAAAAAAAAAAgAAA=</HashCode>
+      <FileName>GameSettings.h</FileName>
+    </TypeIdentifier>
+  </Enum>
+  <Font Name="Microsoft YaHei UI" Size="9" />
+</ClassDiagram>
